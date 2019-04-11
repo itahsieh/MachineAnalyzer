@@ -2,7 +2,7 @@
 DataType_Nbyte = 4
 
 # The order of the data format
-ColumnDict = {
+FEA_ColumnDict = {
     "Xmean"     : 0,
     "Xstd"      : 1,
     "Xrms"      : 2, 
@@ -34,9 +34,9 @@ ColumnDict = {
     "SensorTemprature": 25
     }
 # number of columns for single row data
-Ncolumn = len(ColumnDict)
+Ncolumn = len(FEA_ColumnDict)
 
-def ImportData(DataPath):
+def ImportData( DataType, DataPath):
     # calculate data size and number of rows
     import os
     DataSize = os.stat(DataPath).st_size
@@ -50,3 +50,8 @@ def ImportData(DataPath):
             Array.append(list(row))
     
     return Array
+
+
+
+
+

@@ -3,21 +3,21 @@ __author__      = "I-Ta Hsieh"
 __copyright__   = "Private use"
 
 # The data path
-DataFile = './data/fea1_0409.bin'
+DataDir = './data/'
+DataFile = 'fea1_0409.bin'
+#DataFile = 'raw1_1255.bin'
+# Data Type: 'feature', 'raw', or 'fft'
+DataType = 'feature'
 
-from DataIO import ImportData, ColumnDict
-Array = ImportData(DataFile)
+from DataIO import ImportData, FEA_ColumnDict
+Array = ImportData( DataType, DataDir+DataFile)
 
 import numpy as np
 Array = np.array(Array)
 
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots(figsize=(16, 12), dpi=80)
-ax.plot(Array[:,ColumnDict["Xmean"]])
-ax.set(xlabel='time (s)', ylabel='Mean',
-       title='About as simple as it gets, folks')
-ax.grid()
+from plot import PlotTimeSiries, PlotHist
+VisualType = "Xmean"
+PlotTimeSiries( VisualType, data = Array[:,FEA_ColumnDict[VisualType]])
+PlotHist( VisualType, data = Array[:,FEA_ColumnDict[VisualType]])
 
-ImageFileName = "test.png"
-fig.savefig(ImageFileName)
-#plt.show()
+    
