@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 Spec_figsize = (16, 12)
 Spec_dpi = 80
@@ -15,8 +16,6 @@ def PlotTimeSiries(DataType, data):
     #plt.show()
 
 def PlotHist(DataType,data):
-    import numpy as np
-    
     # mean of the data
     mu = np.mean(data)
     # standard deviation of distribution
@@ -46,3 +45,35 @@ def PlotHist(DataType,data):
     ImageFileName = "figure2.png"
     fig.savefig(ImageFileName)
     #plt.show()
+    
+def PlotSpectrum(DataType,data):
+    DataSize = 4096
+    dt = 1./1e-3
+    nfft = int(DataSize/2)
+    
+    freqs = np.fft.fftfreq( n=DataSize, d=dt)
+    data = data[0:DataSize]  
+
+    # mean of the data
+    mean = np.mean(data)
+    data = data - mean
+    
+    Fourier = np.fft.fft(data)
+    Magnitude = np.abs(Fourier)
+    
+    idx = np.argsort(freqs)
+
+    #exit(0)    
+    fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
+    axes.set_title("Magnitude Spectrum")
+    
+    axes.semilogy( freqs[0:nfft], Magnitude[0:nfft], color='C1')
+    
+    fig.tight_layout()
+    
+    ImageFileName = "figure3.png"
+    fig.savefig(ImageFileName)
+    #plt.show()
+    
+    
+    

@@ -1,3 +1,6 @@
+import os
+import struct
+
 # single-precision data format --> DataType_Nbyte =4 bytes
 DataType_Nbyte = 4
 
@@ -36,13 +39,11 @@ FEA_ColumnDict = {
 # number of columns for single row data
 Ncolumn = len(FEA_ColumnDict)
 
-def ImportData( DataType, DataPath):
+def ImportFeaData(DataPath):
     # calculate data size and number of rows
-    import os
     DataSize = os.stat(DataPath).st_size
     Nrow = int( DataSize / DataType_Nbyte / Ncolumn ) 
 
-    import struct
     Array = []
     with open(DataPath, "rb") as f:
         for i in range(Nrow):
@@ -51,7 +52,19 @@ def ImportData( DataType, DataPath):
     
     return Array
 
-
+def ImportRawData(DataPath):
+    DataSize = os.stat(DataPath).st_size
+    Nvalue = int( DataSize / DataType_Nbyte ) 
+    
+    with open(DataPath, "rb") as f:
+        Array = struct.unpack( 'f'*Nvalue, f.read( DataType_Nbyte * Nvalue ) )
+    
+    return list(Array)
+    
+    
+    
+    
+    
 
 
 
