@@ -2,63 +2,73 @@
 __author__      = "I-Ta Hsieh"
 __copyright__   = "Private use"
 
-# The data path
-DataDir = './data/'
+from plot import *
 
-# DataFile: name of data 
-# DataType: 'feature', 'raw', or 'fft'
+def Analyzer(DataDir, DataFile):
+    # Data IO
+    for filename in DataFile:
+        DataPath = DataDir+filename
+        # try if the file exists
+        try:
+            fh = open(DataPath, 'r')
+            fh.close()
+        except FileNotFoundError:
+            print('Data not found:',DataPath)
+            exit(1)
 
-#DataFile = 'fea1_0409.bin'
-DataFile = 'raw1_1255.bin'
+        # DataType: 'feature', 'raw', or 'fft'
+        if 'fea' in filename:
+            DataType = 'feature'
+            from DataIO import ImportFeaData
+            Array = ImportFeaData(DataPath)
+        elif 'raw' in filename:
+            DataType = 'raw'
+            from DataIO import ImportRawData
+            Array = ImportRawData(DataPath)
+        elif 'fft' in filename:
+            DataType = 'fft' 
+            pass
+        else:
+            print('Could not identify the data type')
+            exit(1)
+        
+        # convert the array to numpy type
+        import numpy as np
+        Array = np.array(Array)
 
+        #exit(0)
 
+        # Plotting
+        ImageName = filename.split('.')[0]+'.png'
+        if DataType == 'feature':
+            VisualType = "Xmean"
+            from DataIO import FEA_ColumnDict
 
-
-# Data IO
-from DataIO import ImportFeaData, ImportRawData, FEA_ColumnDict
-
-DataPath = DataDir+DataFile
-try:
-    fh = open(DataPath, 'r')
-    fh.close()
-except FileNotFoundError:
-    print('Data not found:',DataPath)
-    exit(1)
-
-
-if 'fea' in DataFile:
-    DataType = 'feature'
-elif 'raw' in DataFile:
-    DataType = 'raw'
-elif 'fft' in DataFile:
-    DataType = 'fft' 
-else:
-    print('Could not identify the data type')
-    exit(1)
-
-if DataType == 'feature':
-    Array = ImportFeaData(DataPath)
-elif DataType == 'raw':
-    Array = ImportRawData(DataPath)
-elif DataType == 'fft':
-    pass
-
-import numpy as np
-Array = np.array(Array)
-
-#exit(0)
-
-# Plotting
-from plot import PlotTimeSiries, PlotHist, PlotSpectrum
-if DataType == 'feature':
-    VisualType = "Xmean"
-    PlotTimeSiries( VisualType, data = Array[:,FEA_ColumnDict[VisualType]])
-    PlotHist( VisualType, data = Array[:,FEA_ColumnDict[VisualType]])
-elif DataType == 'raw':
-    VisualType = "Raw Data"
-    #PlotTimeSiries( VisualType, data = Array)data
-    #PlotHist( VisualType, data = Array)
-    PlotSpectrum( VisualType, data = Array)
-   
-   
+            PlotTimeSeries( VisualType, 
+                           data = Array[:,FEA_ColumnDict[VisualType]], 
+                           ImgFile='Series_'+ImageName
+                           )
+            PlotHist( VisualType, 
+                     data = Array[:,FEA_ColumnDict[VisualType]], 
+                           ImgFile='Hist_'+ImageName
+                     )
+        
+        elif DataType == 'raw':
+            VisualType = "Raw Data"
+            PlotTimeSeries( VisualType, 
+                           data = Array, 
+                           ImgFile='Series_'+ImageName
+                           )
+            PlotHist( 
+                VisualType, 
+                data = Array, 
+                ImgFile='Hist_'+ImageName
+                )
+            PlotSpectrum( 
+                VisualType, 
+                data = Array,
+                ImgFile='Spec_'+ImageName
+                )
+        
+        
    
