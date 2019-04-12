@@ -61,10 +61,19 @@ def PlotSpectrum(DataType,data, ImgFile):
     Fourier = np.fft.fft(data)
     Magnitude = np.abs(Fourier)/nfft
     
+    
+    print('For the spectrum '+ImgFile)
+    
+    # energy loss approximation
+    EnergyLoss = 0.0
+    for i in range(1, nfft):
+        EnergyLoss += Magnitude[i]*Magnitude[i] / (freqs[i]*freqs[i]) 
+    print('Reduced energy loss = ',EnergyLoss,'μ G^2 s^2')
+    
+    print('Maximum Magnitude & the corresponding frequencies')
     SortedIndex = np.argsort(Magnitude[1:nfft])
-    Nmax = 10
+    Nmax = 4
     max_mag_freq_list = []
-    print('Maximum Magnitude in the spectrum '+ImgFile)
     for i in range(Nmax):
         idx = -i-1
         SortedIdx = SortedIndex[idx]+1
@@ -76,8 +85,8 @@ def PlotSpectrum(DataType,data, ImgFile):
                 'Hz' 
                 )
         max_mag_freq_list.append(frequency)
-            
-            
+    
+    
 
     #exit(0)    
     fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
