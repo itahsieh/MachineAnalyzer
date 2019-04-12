@@ -10,6 +10,8 @@ def BiasEstimate(array):
 
 
 def FFTExam():
+    ImageFileName = "FFTExam.png"
+    
     SamplingRate = 1.e3
     DataSize = 4096
     dt = 1./SamplingRate
@@ -27,7 +29,23 @@ def FFTExam():
 
     
     Fourier = np.fft.fft(data)
-    Magnitude = np.abs(Fourier)
+    Magnitude = np.abs(Fourier)/nfft
+
+    SortedIndex = np.argsort(Magnitude[1:nfft])
+    Nmax = 10
+    max_mag_freq_list = []
+    print('Maximum Magnitude in the spectrum '+ImageFileName)
+    for i in range(Nmax):
+        idx = -i-1
+        SortedIdx = SortedIndex[idx]+1
+        frequency = freqs[SortedIdx]
+        #if frequency > 0.:
+        print( '{:5.3e}'.format(Magnitude[SortedIdx]),
+                'mG at',
+                freqs[SortedIdx],
+                'Hz' 
+                )
+        max_mag_freq_list.append(frequency)
 
     #exit(0)    
     fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
@@ -37,7 +55,7 @@ def FFTExam():
     
     fig.tight_layout()
     
-    ImageFileName = "figure3.png"
+    
     fig.savefig(ImageFileName)
     
 FFTExam()

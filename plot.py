@@ -59,7 +59,7 @@ def PlotSpectrum(DataType,data, ImgFile):
     
     freqs = np.fft.fftfreq( n=DataSize, d=dt)
     Fourier = np.fft.fft(data)
-    Magnitude = np.abs(Fourier)
+    Magnitude = np.abs(Fourier)/nfft
     
     SortedIndex = np.argsort(Magnitude[1:nfft])
     Nmax = 10
@@ -70,8 +70,8 @@ def PlotSpectrum(DataType,data, ImgFile):
         SortedIdx = SortedIndex[idx]+1
         frequency = freqs[SortedIdx]
         #if frequency > 0.:
-        print( '{:5.3e}'.format(Magnitude[SortedIdx]*1e-3),
-                'G at',
+        print( '{:5.3e}'.format(Magnitude[SortedIdx]),
+                'mG at',
                 freqs[SortedIdx],
                 'Hz' 
                 )
@@ -83,12 +83,15 @@ def PlotSpectrum(DataType,data, ImgFile):
     fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
     
     axes.set_title("Magnitude Spectrum", size=24)
-    right_margin = 1.2 * max(max_mag_freq_list)
+    #right_margin = 1.2 * max(max_mag_freq_list)
+    right_margin = 300.
+    top_margin = 500.
     axes.set_xlim( right = right_margin )
+    axes.set_ylim( top = top_margin )
     axes.set_xlabel('Frequency (Hz)', fontsize = 20)
-    axes.set_ylabel('Acceleration (G)', fontsize = 20)
+    axes.set_ylabel('Acceleration (mG)', fontsize = 20)
     axes.tick_params(labelsize=16)
-    axes.plot( freqs[0:nfft], Magnitude[0:nfft]*1e-3, color='C1')
+    axes.plot( freqs[0:nfft], Magnitude[0:nfft], color='C1')
     
     fig.tight_layout()
 
