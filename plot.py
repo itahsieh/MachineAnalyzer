@@ -45,30 +45,22 @@ def PlotHist(DataType,data, ImgFile):
     fig.savefig(ImgFile)
     print(ImgFile,'generated')
     
-def PlotSpectrum( freqs, Magnitude, ImgFile):
-    FFTSize = len(freqs)
-    nfft = int(FFTSize/2)
-    print('For the spectrum '+ImgFile)
-    
-    
-    
-
-    
-    
-
-    #exit(0)    
+def PlotSpectrum( Spec, ImgFile):  
     fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
     
+    
+    #right_margin = 300.
     axes.set_title("Magnitude Spectrum", size=24)
-    #right_margin = 1.2 * max(max_mag_freq_list)
-    right_margin = 300.
-    top_margin = 500.
+    right_margin = 1.2 * max(Spec.max_mag_freq_list)
+    MaxIdx = Spec.SortedIndex[-1]+1
+    top_margin = 1.2 * Spec.Magnitude[MaxIdx]
     axes.set_xlim( right = right_margin )
     axes.set_ylim( top = top_margin )
     axes.set_xlabel('Frequency (Hz)', fontsize = 20)
     axes.set_ylabel('Acceleration (mG)', fontsize = 20)
+    
     axes.tick_params(labelsize=16)
-    axes.plot( freqs[0:nfft], Magnitude[0:nfft], color='C1')
+    axes.plot( Spec.freqs[0:Spec.nfft], Spec.Magnitude[0:Spec.nfft], color='C1')
     
     fig.tight_layout()
 

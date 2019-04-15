@@ -3,9 +3,12 @@ __author__      = "I-Ta Hsieh"
 __copyright__   = "Private use"
 
 # The data path
-DataDir = './data/'
+#DataDir = './data/'
+DataDir = './data/raw/'
 
-# DataFile: name of data 
+# DataFile: name of data
+# Attention: raw dat must contain 'raw' in file name
+#            feature data must contain 'fea' in file name
 #DataFile = ['fea1_0409.bin']
 
 #DataFile = [
@@ -14,9 +17,13 @@ DataDir = './data/'
     #'raw3_1255.bin'
     #]
 
-DataFile = ['raw3_1255.bin']
+#DataFile = ['raw3_1255.bin']
+
+DataFile = ['0223_200_zraw3.bin']
+
 
 from analyzer import Analyzer
-Analyzer( DataDir, DataFile)
+for filename in DataFile:
+    Analyzer( DataDir, filename)
 
 
