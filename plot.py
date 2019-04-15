@@ -45,51 +45,14 @@ def PlotHist(DataType,data, ImgFile):
     fig.savefig(ImgFile)
     print(ImgFile,'generated')
     
-def PlotSpectrum(DataType, data, ImgFile):
-    SamplingRate = 4. * 1024
-    DataSize = 4096
-    
-    dt = 1. / SamplingRate
-    nfft = int(DataSize/2)
-
-    assert DataSize <= len(data)
-    
-    #for i in range(len(data)/DataSize):
-    i=0
-    dataFFT = data[i*DataSize:(i+1)*DataSize]  
-
-    ## mean of the data
-    #mean = np.mean(dataFFT)
-    #dataFFT = dataFFT - mean
-    
-    freqs = np.fft.fftfreq( n=DataSize, d=dt)
-    Fourier = np.fft.fft(dataFFT)
-    Magnitude = np.abs(Fourier)/nfft
-    
-    
+def PlotSpectrum( freqs, Magnitude, ImgFile):
+    FFTSize = len(freqs)
+    nfft = int(FFTSize/2)
     print('For the spectrum '+ImgFile)
     
-    # energy loss approximation
-    EnergyLoss = 0.0
-    for i in range(1, nfft):
-        EnergyLoss += Magnitude[i]*Magnitude[i] / (freqs[i]*freqs[i]) 
-    print('Reduced energy loss = ',EnergyLoss,'μ G^2 s^2')
     
-    print('Maximum Magnitude & the corresponding frequencies')
-    SortedIndex = np.argsort(Magnitude[1:nfft])
-    Nmax = 4
-    max_mag_freq_list = []
-    for i in range(Nmax):
-        idx = -i-1
-        SortedIdx = SortedIndex[idx]+1
-        frequency = freqs[SortedIdx]
-        #if frequency > 0.:
-        print( '{:5.3e}'.format(Magnitude[SortedIdx]),
-                'mG at',
-                freqs[SortedIdx],
-                'Hz' 
-                )
-        max_mag_freq_list.append(frequency)
+    
+
     
     
 

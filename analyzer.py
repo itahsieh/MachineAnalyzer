@@ -69,9 +69,23 @@ def Analyzer(DataDir, DataFile):
                 data = Array, 
                 ImgFile=ImageName+'_Hist.png'
                 )
+            
+            from FFT import FFTClass
+            DataSize = 4096
+            SamplingRate = 4. * 1024
+            assert DataSize <= len(Array)
+    
+            #for i in range(len(Array)/DataSize):
+            i=0
+            dataFFT = Array[i*DataSize:(i+1)*DataSize] 
+            
+            fft = FFTClass(DataSize, SamplingRate)
+            fft.FFT(dataFFT)
+            fft.EnergyAnalysis()
+            fft.MaxMagnitude()
+
             PlotSpectrum( 
-                VisualType, 
-                data = Array,
+                fft.freqs, fft.Magnitude,
                 ImgFile=ImageName+'_Spec.png'
                 )
         

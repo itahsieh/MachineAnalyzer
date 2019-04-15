@@ -9,11 +9,7 @@ def BiasEstimate(array):
     pass
 
 
-def FFT(dataFFT):
-    
-    
-    
-    return freqs, Magnitude
+
 
 
 
