@@ -12,6 +12,7 @@ def PlotTimeSeries(DataType, data, ImgFile):
     axes.grid()
 
     fig.savefig(ImgFile)
+    print(ImgFile,'generated')
     #plt.show()
 
 def PlotHist(DataType,data, ImgFile):
@@ -42,8 +43,9 @@ def PlotHist(DataType,data, ImgFile):
     fig.tight_layout()
     
     fig.savefig(ImgFile)
+    print(ImgFile,'generated')
     
-def PlotSpectrum(DataType,data, ImgFile):
+def PlotSpectrum(DataType, data, ImgFile):
     SamplingRate = 4. * 1024
     DataSize = 4096
     
@@ -51,14 +53,17 @@ def PlotSpectrum(DataType,data, ImgFile):
     nfft = int(DataSize/2)
 
     assert DataSize <= len(data)
-    data = data[0:DataSize]  
+    
+    #for i in range(len(data)/DataSize):
+    i=0
+    dataFFT = data[i*DataSize:(i+1)*DataSize]  
 
-    # mean of the data
-    mean = np.mean(data)
-    data = data - mean
+    ## mean of the data
+    #mean = np.mean(dataFFT)
+    #dataFFT = dataFFT - mean
     
     freqs = np.fft.fftfreq( n=DataSize, d=dt)
-    Fourier = np.fft.fft(data)
+    Fourier = np.fft.fft(dataFFT)
     Magnitude = np.abs(Fourier)/nfft
     
     
@@ -105,6 +110,7 @@ def PlotSpectrum(DataType,data, ImgFile):
     fig.tight_layout()
 
     fig.savefig(ImgFile)
+    print(ImgFile,'generated')
     #plt.show()
     
     

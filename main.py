@@ -6,12 +6,15 @@ __copyright__   = "Private use"
 DataDir = './data/'
 
 # DataFile: name of data 
-#DataFile = 'fea1_0409.bin'
-DataFile = [
-    'raw1_1255.bin',
-    'raw2_1255.bin',
-    'raw3_1255.bin'
-    ]
+#DataFile = ['fea1_0409.bin']
+
+#DataFile = [
+    #'raw1_1255.bin',
+    #'raw2_1255.bin',
+    #'raw3_1255.bin'
+    #]
+
+DataFile = ['raw3_1255.bin']
 
 from analyzer import Analyzer
 Analyzer( DataDir, DataFile)

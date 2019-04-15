@@ -39,35 +39,40 @@ def Analyzer(DataDir, DataFile):
         #exit(0)
 
         # Plotting
-        ImageName = filename.split('.')[0]+'.png'
+        
         if DataType == 'feature':
-            VisualType = "Xmean"
             from DataIO import FEA_ColumnDict
+            
+           
+            for VisualType in ['Xmean','Ymean','Zmean','Xstd','Ystd','Zstd']:
+                ImageName = filename.split('.')[0]+'_'+VisualType
+                PlotTimeSeries( VisualType, 
+                        data = Array[:,FEA_ColumnDict[VisualType]], 
+                        ImgFile=ImageName+'_Series.png'
+                        )
+                PlotHist( VisualType, 
+                        data = Array[:,FEA_ColumnDict['Xmean']], 
+                        ImgFile=ImageName+'_Hist.png'
+                        )
+            
 
-            PlotTimeSeries( VisualType, 
-                           data = Array[:,FEA_ColumnDict[VisualType]], 
-                           ImgFile='Series_'+ImageName
-                           )
-            PlotHist( VisualType, 
-                     data = Array[:,FEA_ColumnDict[VisualType]], 
-                           ImgFile='Hist_'+ImageName
-                     )
         
         elif DataType == 'raw':
             VisualType = "Raw Data"
+            ImageName = filename.split('.')[0]
             PlotTimeSeries( VisualType, 
                            data = Array, 
-                           ImgFile='Series_'+ImageName
+                           ImgFile=ImageName+'_Series.png'
                            )
             PlotHist( 
                 VisualType, 
                 data = Array, 
-                ImgFile='Hist_'+ImageName
+                ImgFile=ImageName+'_Hist.png'
                 )
             PlotSpectrum( 
                 VisualType, 
                 data = Array,
-                ImgFile='Spec_'+ImageName
+                ImgFile=ImageName+'_Spec.png'
                 )
         
         

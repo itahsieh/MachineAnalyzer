@@ -9,6 +9,14 @@ def BiasEstimate(array):
     pass
 
 
+def FFT(dataFFT):
+    
+    
+    
+    return freqs, Magnitude
+
+
+
 def FFTExam():
     ImageFileName = "FFTExam.png"
     
