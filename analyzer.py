@@ -54,7 +54,6 @@ def Analyzer(DataDir, filename):
                     )
         
 
-    
     elif DataType == 'raw':
         VisualType = "Raw Data"
         ImageName = filename.split('.')[0]
