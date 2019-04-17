@@ -18,19 +18,28 @@ parser.add_argument('--waterfall', dest='waterfall_plot', action='store_true',
                     default=False, help = "waterfall plot viewer")
 
 
-
+# fetch the arguments
 args = parser.parse_args(sys.argv[1:])
 
+
+# Data IO
 splitted_path = args.data.rsplit('/',1) 
 DataDir = splitted_path[0]+'/'
 filename = splitted_path[1]
 
-print(args) 
+from DataIO import DataImport
+DataType, Array = DataImport(DataDir, filename)
 
-exit(0)
 
-#if args.watefall_plot:
-    #pass
+# Plotting
+from plot import VisualOpt, PlotClass
+VOpt = VisualOpt(args)
+plot = PlotClass(VisualOpt = VOpt, 
+                 DataType = DataType, 
+                 DataName = filename.split('.')[0],
+                 Array = Array
+                 )
 
-from analyzer import Analyzer   
-Analyzer( DataDir, filename)
+
+
+

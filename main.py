@@ -24,6 +24,9 @@ DataFile = ['0223_200_zraw3.bin']
 
 from analyzer import Analyzer
 for filename in DataFile:
-    Analyzer( DataDir, filename)
+    # Data IO
+    DataType, Array = DataImport(DataDir, filename)
+    # Call Analyzer
+    Analyzer( DataType, Array, filename)
 
 

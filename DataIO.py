@@ -61,7 +61,35 @@ def ImportRawData(DataPath):
     
     return list(Array)
     
+def DataImport(DataDir, filename):
+    # Data IO
+    DataPath = DataDir+filename
+    # try if the file exists
+    try:
+        fh = open(DataPath, 'r')
+        fh.close()
+    except FileNotFoundError:
+        print('Data not found:',DataPath)
+        exit(1)
+    # DataType: 'feature', 'raw', or 'fft'
+    if 'fea' in filename:
+        DataType = 'feature'
+        Array = ImportFeaData(DataPath)
+    elif 'raw' in filename:
+        DataType = 'raw'
+        Array = ImportRawData(DataPath)
+    elif 'fft' in filename:
+        DataType = 'fft' 
+        pass
+    else:
+        print('Could not identify the data type')
+        exit(1)
     
+    # convert the array to numpy type
+    import numpy as np
+    Array = np.array(Array)
+    
+    return DataType, Array
     
     
     

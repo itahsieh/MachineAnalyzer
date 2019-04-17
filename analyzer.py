@@ -2,42 +2,13 @@
 __author__      = "I-Ta Hsieh"
 __copyright__   = "Private use"
 
-from plot import *
 
-def Analyzer(DataDir, filename):
-    # Data IO
-    DataPath = DataDir+filename
-    # try if the file exists
-    try:
-        fh = open(DataPath, 'r')
-        fh.close()
-    except FileNotFoundError:
-        print('Data not found:',DataPath)
-        exit(1)
-    # DataType: 'feature', 'raw', or 'fft'
-    if 'fea' in filename:
-        DataType = 'feature'
-        from DataIO import ImportFeaData
-        Array = ImportFeaData(DataPath)
-    elif 'raw' in filename:
-        DataType = 'raw'
-        from DataIO import ImportRawData
-        Array = ImportRawData(DataPath)
-    elif 'fft' in filename:
-        DataType = 'fft' 
-        pass
-    else:
-        print('Could not identify the data type')
-        exit(1)
-    
-    # convert the array to numpy type
-    import numpy as np
-    Array = np.array(Array)
+# Data IO
+DataType, Array = DataImport(DataDir, filename)
 
-    #exit(0)
-
+def Analyzer(DataType, Array, filename):
     # Plotting
-    
+    from plot import *
     if DataType == 'feature':
         from DataIO import FEA_ColumnDict
         
