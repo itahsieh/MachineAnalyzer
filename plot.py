@@ -1,3 +1,4 @@
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -17,60 +18,16 @@ Spec_dpi = 80
 
 class PlotClass():
     def __init__(self, VisualOpt, DataType, DataName, Array):
+        self.DataName = DataName
         self.VisualOpt = VisualOpt
+        self.Array = Array
         if DataType == 'feature':
-            for VisualType in ['Xmean','Ymean','Zmean','Xstd','Ystd','Zstd']:
-                ImageName = DataName+'_'+VisualType
-                from DataIO import FEA_ColumnDict
-                self.PlotTimeSeries( VisualType, 
-                        data = Array[:,FEA_ColumnDict[VisualType]], 
-                        ImgFile=ImageName+'_Series.png'
-                        )
-                self.PlotHist( VisualType, 
-                        data = Array[:,FEA_ColumnDict['Xmean']], 
-                        ImgFile=ImageName+'_Hist.png'
-                        )
-            
+            self.feaPlot()
 
         elif DataType == 'raw':
-            ImageName = DataName
-            if VisualOpt.series:
-                VisualType = "Raw Data"
-                self.PlotTimeSeries( VisualType, 
-                                data = Array, 
-                                ImgFile=ImageName+'_Series.png'
-                                )
-                self.PlotHist( 
-                    VisualType, 
-                    data = Array, 
-                    ImgFile=ImageName+'_Hist.png'
-                    )
-            
-            if VisualOpt.spec:
-                print('For the spectrum of the data ' + DataName)   
-                
-                DataSize = 4096
-                SamplingRate = 4.e3
-                assert DataSize <= len(Array)
-
-                #from math import floor
-                #for i in range(floor(len(Array)/DataSize)):
-                i=0
-                dataFFT = Array[i*DataSize:(i+1)*DataSize] 
-                
-                from FFT import SpecClass
-                Spec = SpecClass(SamplingRate)
-                Spec.FFT(dataFFT)
-                Spec.EnergyAnalysis()
-                Spec.MaxMagnitude()
-
-                self.PlotSpectrum( 
-                    Spec,
-                    ImgFile=ImageName+'_Spec.png'
-                    )
+            self.rawPlot()
 
         if not VisualOpt.SaveFig:
-            import matplotlib.pyplot as plt
             plt.show()
         
         
@@ -145,7 +102,102 @@ class PlotClass():
         if self.VisualOpt.SaveFig:
             self.PlotOutput()
         
+    def feaPlot(self):
+        for VisualType in ['Xmean','Ymean','Zmean','Xstd','Ystd','Zstd']:
+            ImageName = self.DataName+'_'+VisualType
+            from DataIO import FEA_ColumnDict
+            self.PlotTimeSeries( VisualType, 
+                    data = self.Array[:,FEA_ColumnDict[VisualType]], 
+                    ImgFile=ImageName+'_Series.png'
+                    )
+            self.PlotHist( VisualType, 
+                    data = self.Array[:,FEA_ColumnDict['Xmean']], 
+                    ImgFile=ImageName+'_Hist.png'
+                    )
+            
+    def rawPlot(self):
+        ImageName = self.DataName
+        if self.VisualOpt.series:
+            
+            VisualType = "Raw Data"
+            self.PlotTimeSeries( VisualType, 
+                data = self.Array, 
+                ImgFile=ImageName+'_Series.png'
+                )
+            self.PlotHist( 
+                VisualType, 
+                data = self.Array, 
+                ImgFile=ImageName+'_Hist.png'
+                )
+        
+        if self.VisualOpt.spec:
+            DataSize = 4096
+            SamplingRate = 4.e3
+            assert DataSize <= len(self.Array)
+            if self.VisualOpt.waterfall:
+                
+
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+                
+                from math import floor
+                Ncycle = int(len(self.Array)/DataSize)
+                for i in range(Ncycle):
+                    
+                    dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
+                
+                    from FFT import SpecClass
+                    Spec = SpecClass(SamplingRate)
+                    Spec.FFT(dataFFT)
+                    '''
+                    cs = ['r'] * Spec.nfft
+                    
+                    ax.bar([float(i)], 
+                           Spec.freqs[1:Spec.nfft],
+                           Spec.Magnitude[1:Spec.nfft],
+                           zdir='z',
+                           height=500.0,
+                           color=cs,
+                           alpha=0.8
+                           )
+                    
+                for c, z in zip(['r', 'g', 'b', 'y'], [30, 20, 10, 0]):
+                    '''
+                    xs = np.arange(20)
+                    ys = np.random.rand(20)
+
+                    # You can provide either a single color or an array. To demonstrate this,
+                    # the first bar of each set will be colored cyan.
+                    cs = ['r'] * len(ys)
+
+                    ax.bar(xs, 
+                           ys , 
+                           zs = [float(i)], 
+                           zdir = 'y', 
+                           color=cs, 
+                           alpha=0.8)
+
+                ax.set_xlabel('Time')
+                ax.set_ylabel('frequency')
+                ax.set_zlabel('Magnitude')
+
+
+            else:
+                print('For the spectrum of the data ' + self.DataName)   
+                #from math import floor
+                #for i in range(floor(len(self.Array)/DataSize)):
+                i=0
+                dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
+                
+                from FFT import SpecClass
+                Spec = SpecClass(SamplingRate)
+                Spec.FFT(dataFFT)
+                Spec.EnergyAnalysis()
+                Spec.MaxMagnitude()
+
+                self.PlotSpectrum( 
+                    Spec,
+                    ImgFile=ImageName+'_Spec.png'
+                    )
     
-        
-        
         
