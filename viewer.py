@@ -32,5 +32,5 @@ exit(0)
 #if args.watefall_plot:
     #pass
 
-from analyzer import Analyzer
+from analyzer import Analyzer   
 Analyzer( DataDir, filename)
