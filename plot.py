@@ -131,15 +131,14 @@ class PlotClass():
                 )
         
         if self.VisualOpt.spec:
-            DataSize = 4096
+            
             SamplingRate = 4.e3
-            assert DataSize <= len(self.Array)
+            from math import floor
             if self.VisualOpt.waterfall:
-                
+                DataSize = 4096
+                assert DataSize <= len(self.Array)
 
                 
-                
-                from math import floor
                 Ncycle = int(len(self.Array)/DataSize)
                 nfft = int(DataSize/2)
                 # spectrum cube in the order (Time, Magnitude, frequency)
@@ -197,10 +196,11 @@ class PlotClass():
 
             else:
                 print('For the spectrum of the data ' + self.DataName)   
-                #from math import floor
-                #for i in range(floor(len(self.Array)/DataSize)):
-                i=0
-                dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
+
+                DataSize = 2**floor(np.log(len(self.Array))/np.log(2.))
+                
+                print(len(self.Array), DataSize)
+                dataFFT = self.Array[0:DataSize] 
                 
                 from FFT import SpecClass
                 Spec = SpecClass(SamplingRate)
