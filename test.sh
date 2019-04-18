@@ -3,7 +3,7 @@
 CASE=${1} 
 case $CASE in
     "waterfall")
-        ./viewer.py -i data/raw/0223_300_zraw3.bin --show --spec --waterfall
+        ./viewer.py -i data/raw3_1255.bin --show --spec --waterfall
         ;;
     "spec")
         ./viewer.py -i data/raw/0223_300_zraw3.bin --show --spec

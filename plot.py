@@ -137,11 +137,14 @@ class PlotClass():
             if self.VisualOpt.waterfall:
                 
 
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
+                
                 
                 from math import floor
                 Ncycle = int(len(self.Array)/DataSize)
+                nfft = int(DataSize/2)
+                # spectrum cube in the order (Time, Magnitude, frequency)
+
+                spec_mag = np.zeros(( Ncycle, nfft-1))
                 for i in range(Ncycle):
                     
                     dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
@@ -149,30 +152,40 @@ class PlotClass():
                     from FFT import SpecClass
                     Spec = SpecClass(SamplingRate)
                     Spec.FFT(dataFFT)
-                    '''
-                    cs = ['r'] * Spec.nfft
                     
-                    ax.bar([float(i)], 
-                           Spec.freqs[1:Spec.nfft],
-                           Spec.Magnitude[1:Spec.nfft],
-                           zdir='z',
-                           height=500.0,
-                           color=cs,
-                           alpha=0.8
-                           )
+                    if i == 0:
+                        spec_freq = Spec.freqs[1:Spec.nfft]
+                    spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
                     
-                for c, z in zip(['r', 'g', 'b', 'y'], [30, 20, 10, 0]):
-                    '''
-                    xs = np.arange(20)
-                    ys = np.random.rand(20)
-
-                    # You can provide either a single color or an array. To demonstrate this,
-                    # the first bar of each set will be colored cyan.
-                    cs = ['r'] * len(ys)
-
+                print('Done FFT map')
+                
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+                for i in range(len(spec_freq)):
+                    if spec_freq[i] >= 500.:
+                        UpperIdx = i
+                        break
+                
+                UpperIdx = int(UpperIdx/2)*2
+                half_size = int(UpperIdx/2)                    
+                for i in range(UpperIdx):
+                    if i < half_size:
+                        a = (i + 0.5)/half_size
+                        assert 0.0 < a < 1.0
+                        b = 1.0 - a
+                        cs = [( b, a, 0.0)]
+                    else:
+                        a = (i + 0.5 - half_size)/half_size
+                        assert 0.0 < a < 1.0
+                        b = 1.0 - a
+                        cs = [( 0.0, b, a)]
+                    
+                    
+                    xs = np.arange(Ncycle)+0.5
+                    ys = spec_mag[:,i]
                     ax.bar(xs, 
-                           ys , 
-                           zs = [float(i)], 
+                           ys, 
+                           zs = spec_freq[i], 
                            zdir = 'y', 
                            color=cs, 
                            alpha=0.8)
