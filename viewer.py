@@ -14,7 +14,7 @@ viewer  -i < Input File >
                       (magnitude distribution of frequency and time)
 ''')
 
-# parser
+
 import sys
 argv = sys.argv[1:]
 
@@ -23,7 +23,7 @@ if not argv:
         sys.exit(2)
 
 
-
+# parser
 parser = argparse.ArgumentParser(prog='viewer', description = 'Vibrational data viewer')
 parser.add_argument("-i", "--input", help="input data path", dest="data", default="default")
 parser.add_argument('--series', dest='series_view', action='store_true',
@@ -40,7 +40,7 @@ parser.add_argument('--waterfall', dest='waterfall_plot', action='store_true',
 
 
 # fetch the arguments
-args = parser.parse_args(sys.argv[1:])
+args = parser.parse_args(argv)
 
 
 # Data IO
