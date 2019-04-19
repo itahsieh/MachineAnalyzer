@@ -2,6 +2,9 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
 
+Spec_figsize = (16, 12)
+Spec_dpi = 80
+
 class VisualOpt(object):
     def __init__(self, args):
         self.spec = args.spec_view
@@ -10,13 +13,6 @@ class VisualOpt(object):
         self.contour = args.contour_plot
         self.SaveFig = not args.show_gui
         self.show_gui = args.show_gui
-
-
-Spec_figsize = (16, 12)
-Spec_dpi = 80
-
-
-
 
 class PlotClass():
     def __init__(self, VisualOpt, DataType, DataName, Array):
@@ -52,11 +48,38 @@ class PlotClass():
         if self.VisualOpt.spec:
             self.PloRAWSpectrum()
             
-            if self.VisualOpt.waterfall:
-                self.PlotRAWSpecWaterfall()
-            
-            if self.VisualOpt.contour:
-                self.PlotRAWSpecContour()
+            if self.VisualOpt.waterfall or self.VisualOpt.contour:
+                # FFT map computing
+                DataSize = 1024
+                assert DataSize <= len(self.Array)
+
+                self.Ncycle = int(len(self.Array)/DataSize)
+                nfft = int(DataSize/2)
+                self.spec_mag = np.zeros(( self.Ncycle, nfft-1))
+                for i in range(self.Ncycle):
+                    dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
+                
+                    from FFT import SpecClass
+                    SamplingRate = 4.e3
+                    Spec = SpecClass(SamplingRate)
+                    Spec.FFT(dataFFT)
+                    
+                    if i == 0:
+                        self.spec_freq = Spec.freqs[1:Spec.nfft]
+                    self.spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
+                print('Done FFT map')
+                
+                for i in range(len(self.spec_freq)):
+                    if self.spec_freq[i] >= 500.:
+                        self.UpperFreqIdx = i
+                        break
+                self.UpperFreqIdx = int(self.UpperFreqIdx/2)*2
+                
+                if self.VisualOpt.waterfall:
+                    self.PlotRAWSpecWaterfall()
+                
+                if self.VisualOpt.contour:
+                    self.PlotRAWSpecContour()
             
             
                 
@@ -74,40 +97,10 @@ class PlotClass():
     
                 
     def PlotRAWSpecWaterfall(self):
-        DataSize = 4096
-        assert DataSize <= len(self.Array)
-
-        
-        Ncycle = int(len(self.Array)/DataSize)
-        nfft = int(DataSize/2)
-        # spectrum cube in the order (Time, Magnitude, frequency)
-
-        spec_mag = np.zeros(( Ncycle, nfft-1))
-        for i in range(Ncycle):
-            
-            dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
-        
-            from FFT import SpecClass
-            SamplingRate = 4.e3
-            Spec = SpecClass(SamplingRate)
-            Spec.FFT(dataFFT)
-            
-            if i == 0:
-                spec_freq = Spec.freqs[1:Spec.nfft]
-            spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
-            
-        print('Done FFT map')
-        
-        fig = plt.figure()
+        fig = plt.figure(figsize=Spec_figsize, dpi=Spec_dpi)
         ax = fig.add_subplot(111, projection='3d')
-        for i in range(len(spec_freq)):
-            if spec_freq[i] >= 500.:
-                UpperIdx = i
-                break
-        
-        UpperIdx = int(UpperIdx/2)*2
-        half_size = int(UpperIdx/2)                    
-        for i in range(UpperIdx):
+        half_size = int(self.UpperFreqIdx/2)
+        for i in range(self.UpperFreqIdx):
             if i < half_size:
                 a = (i + 0.5)/half_size
                 assert 0.0 < a < 1.0
@@ -119,12 +112,11 @@ class PlotClass():
                 b = 1.0 - a
                 cs = [( 0.0, b, a)]
             
-            
-            xs = np.arange(Ncycle)+0.5
-            ys = spec_mag[:,i]
-            ax.bar(xs, 
+            xs = np.arange(self.Ncycle)+0.5
+            ys = self.spec_mag[:,i]
+            ax.bar( xs,
                     ys, 
-                    zs = spec_freq[i], 
+                    zs = self.spec_freq[i], 
                     zdir = 'y', 
                     color=cs, 
                     alpha=0.8)
@@ -134,7 +126,46 @@ class PlotClass():
         ax.set_zlabel('Magnitude')
         
     def PlotRAWSpecContour(self):
-        pass
+        dx = 1.0
+        dy = self.spec_freq[1] - self.spec_freq[0]
+        x = np.zeros((self.Ncycle, self.UpperFreqIdx))
+        y = np.zeros((self.Ncycle, self.UpperFreqIdx))
+        for i in range(self.Ncycle):
+            for j in range(self.UpperFreqIdx):
+                x[i,j] = i + 0.5
+                y[i,j] = self.spec_freq[j]
+        z = self.spec_mag[:,0:self.UpperFreqIdx]
+        
+        from matplotlib.ticker import MaxNLocator
+        # x and y are bounds, so z should be the value *inside* those bounds.
+        # Therefore, remove the last value from the z array.z = z[:-1, :-1]
+        levels = MaxNLocator(nbins=256).tick_values(0., self.spec_mag.max())
+        
+        # pick the desired colormap, sensible levels, and define a normalization
+        # instance which takes data values and translates those into levels.
+        from matplotlib.colors import BoundaryNorm
+        cmap = plt.get_cmap('inferno')
+        norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+
+        fig, ax = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
+
+        # contours are *point* based plots, so convert our bound into point
+        # centers
+        cf = ax.contourf(x, y, z, 
+                         levels=levels,
+                         cmap=cmap)
+        
+        fig.colorbar(cf, ax=ax)
+        ax.set_title('Spectrogram')
+        ax.set_xlabel('cycle')
+        ax.set_ylabel('frequency')
+
+        # adjust spacing between subplots so `ax1` title and `ax0` tick labels
+        # don't overlap
+        fig.tight_layout()
+        
+        if self.VisualOpt.SaveFig:
+            self.PlotOutput()
 
     def PloRAWSpectrum(self):
         print('For the spectrum of the data ' + self.DataName)   
@@ -206,9 +237,10 @@ class PlotClass():
         
         self.fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
         
-        #right_margin = 300.
+        right_margin = 500.
         axes.set_title("Magnitude Spectrum", size=24)
-        right_margin = 1.2 * max(Spec.max_mag_freq_list)
+
+        #right_margin = 1.2 * max(Spec.max_mag_freq_list)
         MaxIdx = Spec.SortedIndex[-1]+1
         top_margin = 1.2 * Spec.Magnitude[MaxIdx]
         axes.set_xlim( right = right_margin )
