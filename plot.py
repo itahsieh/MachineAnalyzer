@@ -7,7 +7,9 @@ class VisualOpt(object):
         self.spec = args.spec_view
         self.series = args.series_view
         self.waterfall = args.waterfall_plot
+        self.contour = args.contour_plot
         self.SaveFig = not args.show_gui
+        self.show_gui = args.show_gui
 
 
 Spec_figsize = (16, 12)
@@ -22,18 +24,138 @@ class PlotClass():
         self.VisualOpt = VisualOpt
         self.Array = Array
         if DataType == 'feature':
-            self.feaPlot()
+            self.PlotFEA()
 
         elif DataType == 'raw':
-            self.rawPlot()
+            self.PlotRAW()
 
-        if not VisualOpt.SaveFig:
+        if VisualOpt.show_gui:
             plt.show()
         
+    def PlotFEA(self):
+        for VisualType in ['Xmean','Ymean','Zmean','Xstd','Ystd','Zstd']:
+            ImageName = self.DataName+'_'+VisualType
+            from DataIO import FEA_ColumnDict
+            self.PlotTimeSeries( VisualType, 
+                    data = self.Array[:,FEA_ColumnDict[VisualType]], 
+                    ImgFile=ImageName+'_Series.png'
+                    )
+            self.PlotHist( VisualType, 
+                    data = self.Array[:,FEA_ColumnDict['Xmean']], 
+                    ImgFile=ImageName+'_Hist.png'
+                    )
+            
+    def PlotRAW(self):
+        if self.VisualOpt.series:
+            self.PlotRAWSeries()
         
-    def PlotOutput(self):
-        self.fig.savefig(self.ImgFile)
-        print(self.ImgFile,'generated')
+        if self.VisualOpt.spec:
+            self.PloRAWSpectrum()
+            
+            if self.VisualOpt.waterfall:
+                self.PlotRAWSpecWaterfall()
+            
+            if self.VisualOpt.contour:
+                self.PlotRAWSpecContour()
+            
+            
+                
+    def PlotRAWSeries(self): 
+        VisualType = "Raw Data"
+        self.PlotTimeSeries( VisualType, 
+            data = self.Array, 
+            ImgFile=self.DataName+'_Series.png'
+            )
+        self.PlotHist( 
+            VisualType, 
+            data = self.Array, 
+            ImgFile=self.DataName+'_Hist.png'
+            )
+    
+                
+    def PlotRAWSpecWaterfall(self):
+        DataSize = 4096
+        assert DataSize <= len(self.Array)
+
+        
+        Ncycle = int(len(self.Array)/DataSize)
+        nfft = int(DataSize/2)
+        # spectrum cube in the order (Time, Magnitude, frequency)
+
+        spec_mag = np.zeros(( Ncycle, nfft-1))
+        for i in range(Ncycle):
+            
+            dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
+        
+            from FFT import SpecClass
+            SamplingRate = 4.e3
+            Spec = SpecClass(SamplingRate)
+            Spec.FFT(dataFFT)
+            
+            if i == 0:
+                spec_freq = Spec.freqs[1:Spec.nfft]
+            spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
+            
+        print('Done FFT map')
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        for i in range(len(spec_freq)):
+            if spec_freq[i] >= 500.:
+                UpperIdx = i
+                break
+        
+        UpperIdx = int(UpperIdx/2)*2
+        half_size = int(UpperIdx/2)                    
+        for i in range(UpperIdx):
+            if i < half_size:
+                a = (i + 0.5)/half_size
+                assert 0.0 < a < 1.0
+                b = 1.0 - a
+                cs = [( b, a, 0.0)]
+            else:
+                a = (i + 0.5 - half_size)/half_size
+                assert 0.0 < a < 1.0
+                b = 1.0 - a
+                cs = [( 0.0, b, a)]
+            
+            
+            xs = np.arange(Ncycle)+0.5
+            ys = spec_mag[:,i]
+            ax.bar(xs, 
+                    ys, 
+                    zs = spec_freq[i], 
+                    zdir = 'y', 
+                    color=cs, 
+                    alpha=0.8)
+
+        ax.set_xlabel('Time')
+        ax.set_ylabel('frequency')
+        ax.set_zlabel('Magnitude')
+        
+    def PlotRAWSpecContour(self):
+        pass
+
+    def PloRAWSpectrum(self):
+        print('For the spectrum of the data ' + self.DataName)   
+
+        from math import floor
+        DataSize = 2**floor(np.log(len(self.Array))/np.log(2.))
+        
+        print(len(self.Array), DataSize)
+        dataFFT = self.Array[0:DataSize] 
+        
+        from FFT import SpecClass
+        SamplingRate = 4.e3
+        Spec = SpecClass(SamplingRate)
+        Spec.FFT(dataFFT)
+        Spec.EnergyAnalysis()
+        Spec.MaxMagnitude()
+
+        self.PlotSpectrum( 
+            Spec,
+            ImgFile=self.DataName+'_Spec.png'
+            )
 
     def PlotTimeSeries(self, DataType, data, ImgFile):
         self.ImgFile = ImgFile
@@ -102,115 +224,7 @@ class PlotClass():
         if self.VisualOpt.SaveFig:
             self.PlotOutput()
         
-    def feaPlot(self):
-        for VisualType in ['Xmean','Ymean','Zmean','Xstd','Ystd','Zstd']:
-            ImageName = self.DataName+'_'+VisualType
-            from DataIO import FEA_ColumnDict
-            self.PlotTimeSeries( VisualType, 
-                    data = self.Array[:,FEA_ColumnDict[VisualType]], 
-                    ImgFile=ImageName+'_Series.png'
-                    )
-            self.PlotHist( VisualType, 
-                    data = self.Array[:,FEA_ColumnDict['Xmean']], 
-                    ImgFile=ImageName+'_Hist.png'
-                    )
-            
-    def rawPlot(self):
-        ImageName = self.DataName
-        if self.VisualOpt.series:
-            
-            VisualType = "Raw Data"
-            self.PlotTimeSeries( VisualType, 
-                data = self.Array, 
-                ImgFile=ImageName+'_Series.png'
-                )
-            self.PlotHist( 
-                VisualType, 
-                data = self.Array, 
-                ImgFile=ImageName+'_Hist.png'
-                )
-        
-        if self.VisualOpt.spec:
-            
-            SamplingRate = 4.e3
-            from math import floor
-            if self.VisualOpt.waterfall:
-                DataSize = 4096
-                assert DataSize <= len(self.Array)
-
-                
-                Ncycle = int(len(self.Array)/DataSize)
-                nfft = int(DataSize/2)
-                # spectrum cube in the order (Time, Magnitude, frequency)
-
-                spec_mag = np.zeros(( Ncycle, nfft-1))
-                for i in range(Ncycle):
-                    
-                    dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
-                
-                    from FFT import SpecClass
-                    Spec = SpecClass(SamplingRate)
-                    Spec.FFT(dataFFT)
-                    
-                    if i == 0:
-                        spec_freq = Spec.freqs[1:Spec.nfft]
-                    spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
-                    
-                print('Done FFT map')
-                
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
-                for i in range(len(spec_freq)):
-                    if spec_freq[i] >= 500.:
-                        UpperIdx = i
-                        break
-                
-                UpperIdx = int(UpperIdx/2)*2
-                half_size = int(UpperIdx/2)                    
-                for i in range(UpperIdx):
-                    if i < half_size:
-                        a = (i + 0.5)/half_size
-                        assert 0.0 < a < 1.0
-                        b = 1.0 - a
-                        cs = [( b, a, 0.0)]
-                    else:
-                        a = (i + 0.5 - half_size)/half_size
-                        assert 0.0 < a < 1.0
-                        b = 1.0 - a
-                        cs = [( 0.0, b, a)]
-                    
-                    
-                    xs = np.arange(Ncycle)+0.5
-                    ys = spec_mag[:,i]
-                    ax.bar(xs, 
-                           ys, 
-                           zs = spec_freq[i], 
-                           zdir = 'y', 
-                           color=cs, 
-                           alpha=0.8)
-
-                ax.set_xlabel('Time')
-                ax.set_ylabel('frequency')
-                ax.set_zlabel('Magnitude')
-
-
-            else:
-                print('For the spectrum of the data ' + self.DataName)   
-
-                DataSize = 2**floor(np.log(len(self.Array))/np.log(2.))
-                
-                print(len(self.Array), DataSize)
-                dataFFT = self.Array[0:DataSize] 
-                
-                from FFT import SpecClass
-                Spec = SpecClass(SamplingRate)
-                Spec.FFT(dataFFT)
-                Spec.EnergyAnalysis()
-                Spec.MaxMagnitude()
-
-                self.PlotSpectrum( 
-                    Spec,
-                    ImgFile=ImageName+'_Spec.png'
-                    )
-    
+    def PlotOutput(self):
+        self.fig.savefig(self.ImgFile)
+        print(self.ImgFile,'generated')
         

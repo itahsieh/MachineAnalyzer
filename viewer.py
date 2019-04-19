@@ -6,12 +6,21 @@ import sys
 def usage():
         print ('''
 viewer  -i < Input File >
+        
         --show      : show the plot in GUI window, 
                       otherwise save the image file (png format) 
+        
         --spec      : spectrum plot
+        
         --series    : time series and histogram plot
-        --waterfall : waterfall plot 
+        
+        --waterfall : waterfall plot. 
                       (magnitude distribution of frequency and time)
+                      The flag must be in '--spec' mode
+        
+        --contour   : contour plot 
+                      (magnitude distribution of frequency and time)
+                      The flag must be in '--spec' mode
 ''')
 
 
@@ -38,6 +47,10 @@ parser.add_argument('--spec', dest='spec_view', action='store_true',
 parser.add_argument('--waterfall', dest='waterfall_plot', action='store_true',
                     default=False, help = "waterfall plot viewer")
 
+parser.add_argument('--contour', dest='contour_plot', action='store_true',
+                    default=False, help = "contour plot viewer")
+
+
 
 # fetch the arguments
 args = parser.parse_args(argv)
@@ -50,7 +63,6 @@ filename = splitted_path[1]
 
 from DataIO import DataImport
 DataType, Array = DataImport(DataDir, filename)
-
 
 # Plotting
 from plot import VisualOpt, PlotClass
