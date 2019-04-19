@@ -2,6 +2,27 @@
 import argparse
 import sys
 
+# usage
+def usage():
+        print ('''
+viewer  -i < Input File >
+        --show      : show the plot in GUI window, 
+                      otherwise save the image file (png format) 
+        --spec      : spectrum plot
+        --series    : time series and histogram plot
+        --waterfall : waterfall plot 
+                      (magnitude distribution of frequency and time)
+''')
+
+# parser
+import sys
+argv = sys.argv[1:]
+
+if not argv:
+        usage()
+        sys.exit(2)
+
+
 
 parser = argparse.ArgumentParser(prog='viewer', description = 'Vibrational data viewer')
 parser.add_argument("-i", "--input", help="input data path", dest="data", default="default")
