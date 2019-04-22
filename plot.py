@@ -48,10 +48,10 @@ class Plot():
         
         if self.VisualOpt.spec:
             self.PloRAWSpectrum()
+            SamplingRate = 4.e3
             
             if self.VisualOpt.waterfall or self.VisualOpt.contour:
                 # FFT map computing
-                SamplingRate = 4.e3
                 DataSize = 1024
                 assert DataSize <= len(self.Array)
 
@@ -84,8 +84,26 @@ class Plot():
                 if self.VisualOpt.contour:
                     self.PlotRAWSpecContour()
             elif self.VisualOpt.scalogram:
-                pass
-            
+                from scipy import signal
+                MaxWidth = 31
+                widths = np.arange(1, MaxWidth)
+                cwtmatr = signal.cwt(self.Array, signal.ricker, widths)
+
+
+                fig, ax = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
+                
+                imshow = ax.imshow(cwtmatr, 
+                           extent=[0.0, len(self.Array)/SamplingRate, 1, MaxWidth], 
+                           cmap='seismic',
+                           aspect='auto',
+                           vmax=abs(cwtmatr).max(), 
+                           vmin=-abs(cwtmatr).max() )
+                
+                cb = fig.colorbar(imshow, ax=ax)
+                cb.set_label('percentage')
+                ax.set_title('Scalogram')
+                ax.set_xlabel('Time (second)')
+                ax.set_ylabel(' scales a')
             
                 
     def PlotRAWSeries(self): 
@@ -156,11 +174,11 @@ class Plot():
 
         # contours are *point* based plots, so convert our bound into point
         # centers
-        cf = ax.contourf(x, y, z, 
+        contourf = ax.contourf(x, y, z, 
                          levels=levels,
                          cmap=cmap)
         
-        cb = fig.colorbar(cf, ax=ax)
+        cb = fig.colorbar(contourf, ax=ax)
         cb.set_label('Magnitude (mG)')
         ax.set_title('Spectrogram')
         ax.set_xlabel('Time (second)')
