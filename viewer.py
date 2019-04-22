@@ -21,6 +21,9 @@ viewer  -i < Input File >
         --contour   : contour plot 
                       (magnitude distribution of frequency and time)
                       The flag must be in '--spec' mode
+                      
+        --scalogram : scalogram of the wavelet packet energy
+                
 ''')
 
 
@@ -50,7 +53,8 @@ parser.add_argument('--waterfall', dest='waterfall_plot', action='store_true',
 parser.add_argument('--contour', dest='contour_plot', action='store_true',
                     default=False, help = "contour plot viewer")
 
-
+parser.add_argument('--scalogram', dest='scalogram_plot', action='store_true',
+                    default=False, help = "contour plot viewer")
 
 # fetch the arguments
 args = parser.parse_args(argv)
@@ -65,9 +69,9 @@ from DataIO import DataImport
 DataType, Array = DataImport(DataDir, filename)
 
 # Plotting
-from plot import VisualOpt, PlotClass
+from plot import VisualOpt, Plot
 VOpt = VisualOpt(args)
-plot = PlotClass(VisualOpt = VOpt, 
+plot = Plot(VisualOpt = VOpt, 
                  DataType = DataType, 
                  DataName = filename.split('.')[0],
                  Array = Array

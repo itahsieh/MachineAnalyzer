@@ -1,0 +1,13 @@
+version, time of completion, note of progress
+
+
+0.1     April 2019      waterfall plot 
+0.1.1   April 2019      spectrogram plot
+
+on-going
+
+0.1.2                   walet transform
+
+
+planning
+

@@ -11,10 +11,11 @@ class VisualOpt(object):
         self.series = args.series_view
         self.waterfall = args.waterfall_plot
         self.contour = args.contour_plot
+        self.scalogram = args.scalogram_plot
         self.SaveFig = not args.show_gui
         self.show_gui = args.show_gui
 
-class PlotClass():
+class Plot():
     def __init__(self, VisualOpt, DataType, DataName, Array):
         self.DataName = DataName
         self.VisualOpt = VisualOpt
@@ -82,6 +83,8 @@ class PlotClass():
                 
                 if self.VisualOpt.contour:
                     self.PlotRAWSpecContour()
+            elif self.VisualOpt.scalogram:
+                pass
             
             
                 
