@@ -50,17 +50,19 @@ class PlotClass():
             
             if self.VisualOpt.waterfall or self.VisualOpt.contour:
                 # FFT map computing
+                SamplingRate = 4.e3
                 DataSize = 1024
                 assert DataSize <= len(self.Array)
 
                 self.Ncycle = int(len(self.Array)/DataSize)
+                self.CycleTime = DataSize / SamplingRate
                 nfft = int(DataSize/2)
                 self.spec_mag = np.zeros(( self.Ncycle, nfft-1))
                 for i in range(self.Ncycle):
                     dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
                 
                     from FFT import SpecClass
-                    SamplingRate = 4.e3
+                    
                     Spec = SpecClass(SamplingRate)
                     Spec.FFT(dataFFT)
                     
@@ -112,7 +114,7 @@ class PlotClass():
                 b = 1.0 - a
                 cs = [( 0.0, b, a)]
             
-            xs = np.arange(self.Ncycle)+0.5
+            xs = ( np.arange(self.Ncycle)+0.5 ) * self.CycleTime
             ys = self.spec_mag[:,i]
             ax.bar( xs,
                     ys, 
@@ -132,7 +134,7 @@ class PlotClass():
         y = np.zeros((self.Ncycle, self.UpperFreqIdx))
         for i in range(self.Ncycle):
             for j in range(self.UpperFreqIdx):
-                x[i,j] = i + 0.5
+                x[i,j] = (i + 0.5) * self.CycleTime
                 y[i,j] = self.spec_freq[j]
         z = self.spec_mag[:,0:self.UpperFreqIdx]
         
