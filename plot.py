@@ -121,9 +121,9 @@ class PlotClass():
                     color=cs, 
                     alpha=0.8)
 
-        ax.set_xlabel('Time')
-        ax.set_ylabel('frequency')
-        ax.set_zlabel('Magnitude')
+        ax.set_xlabel('Time (second)')
+        ax.set_ylabel('frequency (Hz)')
+        ax.set_zlabel('Magnitude (mG)')
         
     def PlotRAWSpecContour(self):
         dx = 1.0
@@ -155,10 +155,11 @@ class PlotClass():
                          levels=levels,
                          cmap=cmap)
         
-        fig.colorbar(cf, ax=ax)
+        cb = fig.colorbar(cf, ax=ax)
+        cb.set_label('Magnitude (mG)')
         ax.set_title('Spectrogram')
-        ax.set_xlabel('cycle')
-        ax.set_ylabel('frequency')
+        ax.set_xlabel('Time (second)')
+        ax.set_ylabel('frequency (Hz)')
 
         # adjust spacing between subplots so `ax1` title and `ax0` tick labels
         # don't overlap
