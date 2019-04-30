@@ -5,40 +5,49 @@ import numpy as np
 Spec_figsize = (16, 12)
 Spec_dpi = 80
 
-class VisualOpt(object):
-    def __init__(self, args):
-        self.spec = args.spec_view
-        self.series = args.series_view
-        self.waterfall = args.waterfall_plot
-        self.contour = args.contour_plot
-        self.scalogram = args.scalogram_plot
-        self.SaveFig = not args.show_gui
-        self.show_gui = args.show_gui
+
 
 class Plot():
-    def __init__(self, VisualOpt, DataType, DataName, Array):
-        self.DataName = DataName
+    def __init__(self, VisualOpt, Array):
+        self.DataName = VisualOpt.filename.split('.')[0]
         self.VisualOpt = VisualOpt
+        self.SamplingRate = 4.e3
         self.Array = Array
-        if DataType == 'feature':
+        if VisualOpt.DataType == 'feature':
             self.PlotFEA()
 
-        elif DataType == 'raw':
+        elif VisualOpt.DataType == 'raw':
             self.PlotRAW()
 
         if VisualOpt.show_gui:
             plt.show()
         
     def PlotFEA(self):
-        for VisualType in ['Xmean','Ymean','Zmean','Xstd','Ystd','Zstd']:
+        for VisualType in ['Xmean',
+                           'Ymean',
+                           'Zmean',
+                           'Xstd',
+                           'Ystd',
+                           'Zstd',
+                           'Xkurtosis',
+                           'Ykurtosis',
+                           'Zkurtosis']:
             ImageName = self.DataName+'_'+VisualType
             from DataIO import FEA_ColumnDict
             self.PlotTimeSeries( VisualType, 
                     data = self.Array[:,FEA_ColumnDict[VisualType]], 
                     ImgFile=ImageName+'_Series.png'
                     )
+            
+            if self.VisualOpt.record_range != None:
+                HistData = self.Array[
+                    self.VisualOpt.record_range[0]:self.VisualOpt.record_range[1],
+                    FEA_ColumnDict[VisualType]
+                    ]
+            else:
+                HistData = self.Array[:, FEA_ColumnDict[VisualType]]
             self.PlotHist( VisualType, 
-                    data = self.Array[:,FEA_ColumnDict['Xmean']], 
+                    data = HistData, 
                     ImgFile=ImageName+'_Hist.png'
                     )
             
@@ -48,81 +57,122 @@ class Plot():
         
         if self.VisualOpt.spec:
             self.PloRAWSpectrum()
-            SamplingRate = 4.e3
             
-            if self.VisualOpt.waterfall or self.VisualOpt.contour:
-                # FFT map computing
-                DataSize = 1024
-                assert DataSize <= len(self.Array)
-
-                self.Ncycle = int(len(self.Array)/DataSize)
-                self.CycleTime = DataSize / SamplingRate
-                nfft = int(DataSize/2)
-                self.spec_mag = np.zeros(( self.Ncycle, nfft-1))
-                for i in range(self.Ncycle):
-                    dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
-                
-                    from FFT import SpecClass
-                    
-                    Spec = SpecClass(SamplingRate)
-                    Spec.FFT(dataFFT)
-                    
-                    if i == 0:
-                        self.spec_freq = Spec.freqs[1:Spec.nfft]
-                    self.spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
-                print('Done FFT map')
-                
-                for i in range(len(self.spec_freq)):
-                    if self.spec_freq[i] >= 500.:
-                        self.UpperFreqIdx = i
-                        break
-                self.UpperFreqIdx = int(self.UpperFreqIdx/2)*2
-                
-                if self.VisualOpt.waterfall:
-                    self.PlotRAWSpecWaterfall()
-                
-                if self.VisualOpt.contour:
-                    self.PlotRAWSpecContour()
-            elif self.VisualOpt.scalogram:
-                from scipy import signal
-                MaxWidth = 31
-                widths = np.arange(1, MaxWidth)
-                cwtmatr = signal.cwt(self.Array, signal.ricker, widths)
-
-
-                fig, ax = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
-                
-                imshow = ax.imshow(cwtmatr, 
-                           extent=[0.0, len(self.Array)/SamplingRate, 1, MaxWidth], 
-                           cmap='seismic',
-                           aspect='auto',
-                           vmax=abs(cwtmatr).max(), 
-                           vmin=-abs(cwtmatr).max() )
-                
-                cb = fig.colorbar(imshow, ax=ax)
-                cb.set_label('percentage')
-                ax.set_title('Scalogram')
-                ax.set_xlabel('Time (second)')
-                ax.set_ylabel(' scales a')
+        if self.VisualOpt.waterfall or self.VisualOpt.contour:
+            # FFT map computing
+            if self.VisualOpt.record_range != None:
+                self.Array = self.Array[
+                    self.VisualOpt.record_range[0]:
+                        self.VisualOpt.record_range[1]+1
+                    ]
             
+            DataSize = 1024
+            assert DataSize <= len(self.Array)
+
+            self.Ncycle = int(len(self.Array)/DataSize)
+            self.CycleTime = DataSize / self.SamplingRate
+            nfft = int(DataSize/2)
+            self.spec_mag = np.zeros(( self.Ncycle, nfft-1))
+            for i in range(self.Ncycle):
+                dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
+            
+                from FFT import SpecClass
                 
-    def PlotRAWSeries(self): 
-        VisualType = "Raw Data"
-        self.PlotTimeSeries( VisualType, 
-            data = self.Array, 
-            ImgFile=self.DataName+'_Series.png'
-            )
-        self.PlotHist( 
-            VisualType, 
-            data = self.Array, 
-            ImgFile=self.DataName+'_Hist.png'
-            )
-    
+                Spec = SpecClass(self.SamplingRate)
+                Spec.FFT(dataFFT)
+                
+                if i == 0:
+                    self.spec_freq = Spec.freqs[1:Spec.nfft]
+                self.spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
+            print('Done FFT map')
+            
+            for i in range(len(self.spec_freq)):
+                if self.spec_freq[i] >= 500.:
+                    self.UpperFreqIdx = i
+                    break
+            self.UpperFreqIdx = int(self.UpperFreqIdx/2)*2
+            if self.VisualOpt.record_range != None:
+                self.start_time = self.VisualOpt.record_range[0] / self.SamplingRate
+            else:
+                self.start_time = 0.0
+            
+            if self.VisualOpt.waterfall:
+                self.PlotRAWSpecWaterfall()
+            
+            if self.VisualOpt.contour:
+                self.PlotRAWSpecContour()
+        
+        elif self.VisualOpt.scalogram:
+            from scipy import signal
+            MaxWidth = 31
+            widths = np.arange(1, MaxWidth)
+            cwtmatr = signal.cwt(self.Array, signal.ricker, widths)
+
+
+            fig, ax = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
+            
+            imshow = ax.imshow(cwtmatr, 
+                        extent=[0.0, len(self.Array)/self.SamplingRate, 1, MaxWidth], 
+                        cmap='seismic',
+                        aspect='auto',
+                        vmax=abs(cwtmatr).max(), 
+                        vmin=-abs(cwtmatr).max() )
+            
+            cb = fig.colorbar(imshow, ax=ax)
+            cb.set_label('percentage')
+            ax.set_title('Scalogram')
+            ax.set_xlabel('Time (second)')
+            ax.set_ylabel(' scales a')
+        
+                
+    def PlotRAWSeries(self):
+        if self.VisualOpt._3ax_raw_data:
+            if self.VisualOpt.axis == 'x':
+                self.PlotTimeSeries( "Acceleration along X-axis", data = self.Array, 
+                    ImgFile=self.DataName+'_X-axis_Series.png'
+                    )
+            elif self.VisualOpt.axis == 'y':
+                self.PlotTimeSeries( "Acceleration along Y-axis", 
+                    data = self.Array, 
+                    ImgFile=self.DataName+'_Y-axis_Series.png'
+                    )
+            elif self.VisualOpt.axis == 'z':
+                self.PlotTimeSeries( "Acceleration along Z-axis", 
+                    data = self.Array, 
+                    ImgFile=self.DataName+'_Z-axis_Series.png'
+                    )
+            else:
+                self.PlotTimeSeries( "Acceleration along X-axis", 
+                    data = self.Array[0,:], 
+                    ImgFile=self.DataName+'_X-axis_Series.png'
+                    )
+                self.PlotTimeSeries( "Acceleration along Y-axis", 
+                    data = self.Array[1,:], 
+                    ImgFile=self.DataName+'_Y-axis_Series.png'
+                    )
+                self.PlotTimeSeries( "Acceleration along Z-axis", 
+                    data = self.Array[2,:], 
+                    ImgFile=self.DataName+'_Z-axis_Series.png'
+                    )
+        else:
+            VisualType = "Raw Data"
+            self.PlotTimeSeries( VisualType, 
+                data = self.Array, 
+                ImgFile=self.DataName+'_Series.png'
+                )
+            self.PlotHist( 
+                VisualType, 
+                data = self.Array, 
+                ImgFile=self.DataName+'_Hist.png'
+                )
+        
                 
     def PlotRAWSpecWaterfall(self):
         fig = plt.figure(figsize=Spec_figsize, dpi=Spec_dpi)
         ax = fig.add_subplot(111, projection='3d')
         half_size = int(self.UpperFreqIdx/2)
+        
+        
         for i in range(self.UpperFreqIdx):
             if i < half_size:
                 a = (i + 0.5)/half_size
@@ -135,7 +185,7 @@ class Plot():
                 b = 1.0 - a
                 cs = [( 0.0, b, a)]
             
-            xs = ( np.arange(self.Ncycle)+0.5 ) * self.CycleTime
+            xs = ( np.arange(self.Ncycle)+0.5 ) * self.CycleTime + self.start_time
             ys = self.spec_mag[:,i]
             ax.bar( xs,
                     ys, 
@@ -155,7 +205,7 @@ class Plot():
         y = np.zeros((self.Ncycle, self.UpperFreqIdx))
         for i in range(self.Ncycle):
             for j in range(self.UpperFreqIdx):
-                x[i,j] = (i + 0.5) * self.CycleTime
+                x[i,j] = (i + 0.5) * self.CycleTime + self.start_time
                 y[i,j] = self.spec_freq[j]
         z = self.spec_mag[:,0:self.UpperFreqIdx]
         
@@ -195,14 +245,17 @@ class Plot():
         print('For the spectrum of the data ' + self.DataName)   
 
         from math import floor
-        DataSize = 2**floor(np.log(len(self.Array))/np.log(2.))
-        
-        print(len(self.Array), DataSize)
-        dataFFT = self.Array[0:DataSize] 
+        if self.VisualOpt.record_range == None:
+            DataSize = 2**floor(np.log(len(self.Array))/np.log(2.))
+            dataFFT = self.Array[0:DataSize]
+        else:
+            dataFFT = self.Array[
+                self.VisualOpt.record_range[0]:
+                    self.VisualOpt.record_range[1]+1
+                ]
         
         from FFT import SpecClass
-        SamplingRate = 4.e3
-        Spec = SpecClass(SamplingRate)
+        Spec = SpecClass(self.SamplingRate)
         Spec.FFT(dataFFT)
         Spec.EnergyAnalysis()
         Spec.MaxMagnitude()
@@ -219,12 +272,17 @@ class Plot():
         axes.plot(data)
         axes.set(xlabel='Record number', ylabel = DataType,
             title='Time series of ' + DataType)
-        axes.grid()
+
+        axes.grid(True)
+        if self.VisualOpt.record_range != None:
+            axes.set_xlim( left  = self.VisualOpt.record_range[0],
+                           right = self.VisualOpt.record_range[1])
+        
         
         if self.VisualOpt.SaveFig:
             self.PlotOutput()
         
-    def PlotHist( self, DataType,data, ImgFile):
+    def PlotHist( self, DataType, data, ImgFile):
         self.ImgFile = ImgFile
         
         # mean of the data

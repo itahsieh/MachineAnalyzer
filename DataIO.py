@@ -61,25 +61,24 @@ def ImportRawData(DataPath):
     
     return list(Array)
     
-def DataImport(DataDir, filename):
+def DataImport(opt):
     # Data IO
-    DataPath = DataDir+filename
     # try if the file exists
     try:
-        fh = open(DataPath, 'r')
+        fh = open(opt.DataPath, 'r')
         fh.close()
     except FileNotFoundError:
-        print('Data not found:',DataPath)
+        print('Data not found:',opt.DataPath)
         exit(1)
     # DataType: 'feature', 'raw', or 'fft'
-    if 'fea' in filename:
-        DataType = 'feature'
-        Array = ImportFeaData(DataPath)
-    elif 'raw' in filename:
-        DataType = 'raw'
-        Array = ImportRawData(DataPath)
-    elif 'fft' in filename:
-        DataType = 'fft' 
+    if 'fea' in opt.filename or opt.fea_data:
+        opt.DataType = 'feature'
+        Array = ImportFeaData(opt.DataPath)
+    elif 'raw' in opt.filename or opt.raw_data or opt._3ax_raw_data:
+        opt.DataType = 'raw'
+        Array = ImportRawData(opt.DataPath)
+    elif 'fft' in opt.filename:
+        opt.DataType = 'fft' 
         pass
     else:
         print('Could not identify the data type')
@@ -88,8 +87,17 @@ def DataImport(DataDir, filename):
     # convert the array to numpy type
     import numpy as np
     Array = np.array(Array)
+    if opt._3ax_raw_data:
+        Nvalue = len(Array)
+        Array = Array.reshape((int(Nvalue/3),3)).T
+        if opt.axis == 'x':
+            Array = Array[0,:]
+        elif opt.axis == 'y':
+            Array = Array[1,:]
+        elif opt.axis == 'z':
+            Array = Array[2,:]
     
-    return DataType, Array
+    return Array
     
     
     
