@@ -12,6 +12,15 @@ class SpecClass():
         self.freqs = np.fft.fftfreq( n=self.DataSize, d=dt)
         Fourier = np.fft.fft(dataFFT)
         self.Magnitude = np.abs(Fourier)/self.nfft
+        
+        mean_acceleration   = Fourier[0].real/self.DataSize     # mG
+        total_acceleration  = Fourier[0].real * 9.8 * 1e-3 * dt # m/s
+        print('The sampling rate is ','{:10.4f}'.format(self.SamplingRate),'Hz')
+        print('Mean value at FFT 0Hz:')
+        print('{:10.4f}'.format(mean_acceleration),'mG')
+        print('Total Acceleration:')
+        print('{:10.4f}'.format(total_acceleration*3.6),'km/hr')
+
 
 
     def EnergyAnalysis(self):
@@ -38,4 +47,6 @@ class SpecClass():
                     '{:10.4f}'.format(self.freqs[SortedIdx]),
                     'Hz' 
                     )
-            self.max_mag_freq_list.append(frequency)
+            self.max_mag_freq_list.append
+            
+        

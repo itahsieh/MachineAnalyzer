@@ -11,7 +11,7 @@ class Plot():
     def __init__(self, VisualOpt, Array):
         self.DataName = VisualOpt.filename.split('.')[0]
         self.VisualOpt = VisualOpt
-        self.SamplingRate = 4.e3
+        self.SamplingRate = VisualOpt.sampling
         self.Array = Array
         if VisualOpt.DataType == 'feature':
             self.PlotFEA()
@@ -52,13 +52,13 @@ class Plot():
                     )
             
     def PlotRAW(self):
-        if self.VisualOpt.series:
+        if 'series' in self.VisualOpt.PlotType:
             self.PlotRAWSeries()
         
-        if self.VisualOpt.spec:
+        if 'spec' in self.VisualOpt.PlotType:
             self.PloRAWSpectrum()
             
-        if self.VisualOpt.waterfall or self.VisualOpt.contour:
+        if 'waterfall' in self.VisualOpt.PlotType or 'contour' in self.VisualOpt.PlotType:
             # FFT map computing
             if self.VisualOpt.record_range != None:
                 self.Array = self.Array[
@@ -96,13 +96,13 @@ class Plot():
             else:
                 self.start_time = 0.0
             
-            if self.VisualOpt.waterfall:
+            if 'waterfall' in self.VisualOpt.PlotType:
                 self.PlotRAWSpecWaterfall()
             
-            if self.VisualOpt.contour:
+            if 'contour' in self.VisualOpt.PlotType:
                 self.PlotRAWSpecContour()
         
-        elif self.VisualOpt.scalogram:
+        elif 'scalogram' in self.VisualOpt.PlotType:
             from scipy import signal
             MaxWidth = 31
             widths = np.arange(1, MaxWidth)
@@ -126,9 +126,11 @@ class Plot():
         
                 
     def PlotRAWSeries(self):
-        if self.VisualOpt._3ax_raw_data:
+        if self.VisualOpt._3ax_raw_data:            
+            
             if self.VisualOpt.axis == 'x':
-                self.PlotTimeSeries( "Acceleration along X-axis", data = self.Array, 
+                self.PlotTimeSeries( "Acceleration along X-axis", 
+                    data = self.Array, 
                     ImgFile=self.DataName+'_X-axis_Series.png'
                     )
             elif self.VisualOpt.axis == 'y':
@@ -196,7 +198,10 @@ class Plot():
 
         ax.set_xlabel('Time (second)')
         ax.set_ylabel('frequency (Hz)')
-        ax.set_zlabel('Magnitude (mG)')
+        ax.set_zlabel
+        
+        if self.VisualOpt.SaveFig:
+            self.PlotOutput()
         
     def PlotRAWSpecContour(self):
         dx = 1.0
@@ -220,7 +225,7 @@ class Plot():
         cmap = plt.get_cmap('inferno')
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
-        fig, ax = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
+        self.fig, ax = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
 
         # contours are *point* based plots, so convert our bound into point
         # centers
@@ -228,7 +233,7 @@ class Plot():
                          levels=levels,
                          cmap=cmap)
         
-        cb = fig.colorbar(contourf, ax=ax)
+        cb = self.fig.colorbar(contourf, ax=ax)
         cb.set_label('Magnitude (mG)')
         ax.set_title('Spectrogram')
         ax.set_xlabel('Time (second)')
@@ -236,7 +241,9 @@ class Plot():
 
         # adjust spacing between subplots so `ax1` title and `ax0` tick labels
         # don't overlap
-        fig.tight_layout()
+        self.fig.tight_layout()
+        
+        self.ImgFile = self.DataName+'_contour.png'
         
         if self.VisualOpt.SaveFig:
             self.PlotOutput()
@@ -247,23 +254,26 @@ class Plot():
         from math import floor
         if self.VisualOpt.record_range == None:
             DataSize = 2**floor(np.log(len(self.Array))/np.log(2.))
-            dataFFT = self.Array[0:DataSize]
+            dataFFT = self.Array
+            print('Thea data size:',DataSize)
+            filename = self.DataName+'_Spec.png'
         else:
             dataFFT = self.Array[
                 self.VisualOpt.record_range[0]:
                     self.VisualOpt.record_range[1]+1
                 ]
+            print('The data range (number of record):',self.VisualOpt.record_range)
+            filename = self.DataName + '_range' + str(self.VisualOpt.record_range[0]) + '_' + str(self.VisualOpt.record_range[1]) + '_Spec.png'
         
         from FFT import SpecClass
         Spec = SpecClass(self.SamplingRate)
         Spec.FFT(dataFFT)
         Spec.EnergyAnalysis()
         Spec.MaxMagnitude()
+        
 
-        self.PlotSpectrum( 
-            Spec,
-            ImgFile=self.DataName+'_Spec.png'
-            )
+        self.PlotSpectrum( Spec, ImgFile=self.DataName+'_Spec.png')
+
 
     def PlotTimeSeries(self, DataType, data, ImgFile):
         self.ImgFile = ImgFile

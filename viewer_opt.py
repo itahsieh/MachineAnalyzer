@@ -1,21 +1,20 @@
 class Opt(object):
     def __init__(self, args):
-        self.spec       = args.spec_view
-        self.series     = args.series_view
-        self.waterfall  = args.waterfall_plot
-        self.contour    = args.contour_plot
-
-        self.scalogram  = args.scalogram_plot
+        # ouput device
         self.SaveFig    = not args.show_gui
         self.show_gui   = args.show_gui
+        # data type tag
         self.raw_data   = args.raw_data
         self._3ax_raw_data   = args._3ax_raw_data
         self.fea_data   = args.fea_data
-        
+        # input path
         self.DataPath = args.data
         splitted_path = self.DataPath.rsplit('/',1) 
         self.DataDir = splitted_path[0]+'/'
         self.filename = splitted_path[1]
+        # sampling rate
+        self.sampling = float(args.sampling)
+        
         
         if args.axis == None:
             self.axis = None
@@ -27,4 +26,11 @@ class Opt(object):
         else:
             self.record_range = args.record_range.rsplit('=',1)[0].rsplit(',',1)
             self.record_range = list(map(int, self.record_range))
-
+        
+        self.PlotType = args.plot.rsplit('=',1)[1].rsplit(',')
+        
+        PlotKey = ['series','spec','waterfall','contour','scalogram']
+        for key in self.PlotType:
+            if key not in PlotKey:
+                print('plot keyword is not matched:',key)
+                exit(2)
