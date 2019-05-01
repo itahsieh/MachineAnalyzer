@@ -52,13 +52,14 @@ class Plot():
                     )
             
     def PlotRAW(self):
-        if 'series' in self.VisualOpt.PlotType:
+        PlotType = self.VisualOpt.PlotType
+        if 'series' in PlotType:
             self.PlotRAWSeries()
         
-        if 'spec' in self.VisualOpt.PlotType:
+        if 'spec' in PlotType:
             self.PloRAWSpectrum()
             
-        if 'waterfall' in self.VisualOpt.PlotType or 'contour' in self.VisualOpt.PlotType:
+        if 'waterfall' in PlotType or 'contour' in PlotType or 'velocity' in PlotType:
             # FFT map computing
             if self.VisualOpt.record_range != None:
                 self.Array = self.Array[
@@ -73,8 +74,12 @@ class Plot():
             self.CycleTime = DataSize / self.SamplingRate
             nfft = int(DataSize/2)
             self.spec_mag = np.zeros(( self.Ncycle, nfft-1))
+            
+            bias = self.VisualOpt.bias
+            self.acc_dc = np.zeros(self.Ncycle)
+            self.acc_total = np.zeros(self.Ncycle)
             for i in range(self.Ncycle):
-                dataFFT = self.Array[i*DataSize:(i+1)*DataSize] 
+                dataFFT = self.Array[i*DataSize:(i+1)*DataSize] - bias
             
                 from FFT import SpecClass
                 
@@ -84,25 +89,33 @@ class Plot():
                 if i == 0:
                     self.spec_freq = Spec.freqs[1:Spec.nfft]
                 self.spec_mag[i,:] = Spec.Magnitude[1:Spec.nfft]
+                
+                self.acc_dc[i] = Spec.Fourier[0].real / Spec.DataSize # mG
+                self.acc_total[i] = Spec.Fourier[0].real * 9.8 * 1e-3 / self.SamplingRate # delta m/s
+            
             print('Done FFT map')
             
             for i in range(len(self.spec_freq)):
-                if self.spec_freq[i] >= 500.:
+                if self.spec_freq[i] >= 0.25 * self.SamplingRate:
                     self.UpperFreqIdx = i
                     break
             self.UpperFreqIdx = int(self.UpperFreqIdx/2)*2
+            
             if self.VisualOpt.record_range != None:
                 self.start_time = self.VisualOpt.record_range[0] / self.SamplingRate
             else:
                 self.start_time = 0.0
             
-            if 'waterfall' in self.VisualOpt.PlotType:
+            if 'waterfall' in PlotType:
                 self.PlotRAWSpecWaterfall()
             
-            if 'contour' in self.VisualOpt.PlotType:
+            if 'contour' in PlotType:
                 self.PlotRAWSpecContour()
+                
+            if 'velocity' in PlotType:
+                self.PlotRAWVelocity()
         
-        elif 'scalogram' in self.VisualOpt.PlotType:
+        elif 'scalogram' in PlotType:
             from scipy import signal
             MaxWidth = 31
             widths = np.arange(1, MaxWidth)
@@ -204,8 +217,6 @@ class Plot():
             self.PlotOutput()
         
     def PlotRAWSpecContour(self):
-        dx = 1.0
-        dy = self.spec_freq[1] - self.spec_freq[0]
         x = np.zeros((self.Ncycle, self.UpperFreqIdx))
         y = np.zeros((self.Ncycle, self.UpperFreqIdx))
         for i in range(self.Ncycle):
@@ -248,6 +259,40 @@ class Plot():
         if self.VisualOpt.SaveFig:
             self.PlotOutput()
 
+    def PlotRAWVelocity(self):
+        threshold = self.VisualOpt.threshold
+        x = np.zeros(self.Ncycle+1)
+        v = np.zeros(self.Ncycle+1)
+        x[0] = self.start_time
+        v[0] = self.VisualOpt.IV # m/s
+        for i in range(self.Ncycle):
+            x[i+1] = x[i] + self.CycleTime 
+            if np.abs(self.acc_dc[i]) >= threshold:
+                v[i+1] = v[i] + self.acc_total[i] # m/s
+            else:
+                v[i+1] =v[i]
+                
+        print('Maximum velocity: ',np.max(v),'m/s')
+        print('Minimum velocity: ',np.min(v),'m/s')
+        
+        self.fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
+        
+        axes.set_title("Velocity", size=24)
+        axes.set_xlabel('Time (second)', fontsize = 20)
+        axes.set_ylabel('Velocity (km/hr)', fontsize = 20)
+        axes.tick_params(labelsize=16)
+        axes.plot( x, v*3.6, color='C0')
+
+        # adjust spacing between subplots so `ax1` title and `ax0` tick labels
+        # don't overlap
+        self.fig.tight_layout()
+        
+        self.ImgFile = self.DataName+'_velocity.png'
+        
+        if self.VisualOpt.SaveFig:
+            self.PlotOutput()
+
+
     def PloRAWSpectrum(self):
         print('For the spectrum of the data ' + self.DataName)   
 
@@ -270,6 +315,14 @@ class Plot():
         Spec.FFT(dataFFT)
         Spec.EnergyAnalysis()
         Spec.MaxMagnitude()
+        
+        mean_acceleration   = Spec.Fourier[0].real/Spec.DataSize     # mG
+        total_acceleration  = Spec.Fourier[0].real * 9.8 * 1e-3 * dt # m/s
+        print('The sampling rate is ','{:10.4f}'.format(self.SamplingRate),'Hz')
+        print('Mean value at FFT 0Hz:')
+        print('{:10.4f}'.format(mean_acceleration),'mG')
+        print('Total Acceleration:')
+        print('{:10.4f}'.format(total_acceleration*3.6),'km/hr')
         
 
         self.PlotSpectrum( Spec, ImgFile=self.DataName+'_Spec.png')

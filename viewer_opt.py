@@ -1,3 +1,6 @@
+PlotKey = ['series','spec','waterfall','contour','scalogram','velocity']
+
+
 class Opt(object):
     def __init__(self, args):
         # ouput device
@@ -10,11 +13,14 @@ class Opt(object):
         # input path
         self.DataPath = args.data
         splitted_path = self.DataPath.rsplit('/',1) 
-        self.DataDir = splitted_path[0]+'/'
+        self.DataDir  = splitted_path[0]+'/'
         self.filename = splitted_path[1]
         # sampling rate
         self.sampling = float(args.sampling)
         
+        self.bias = float(args.bias)
+        self.IV = float(args.IV)
+        self.threshold = float(args.threshold)
         
         if args.axis == None:
             self.axis = None
@@ -29,7 +35,7 @@ class Opt(object):
         
         self.PlotType = args.plot.rsplit('=',1)[1].rsplit(',')
         
-        PlotKey = ['series','spec','waterfall','contour','scalogram']
+        
         for key in self.PlotType:
             if key not in PlotKey:
                 print('plot keyword is not matched:',key)
