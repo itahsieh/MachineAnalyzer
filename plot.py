@@ -317,7 +317,7 @@ class Plot():
         Spec.MaxMagnitude()
         
         mean_acceleration   = Spec.Fourier[0].real/Spec.DataSize     # mG
-        total_acceleration  = Spec.Fourier[0].real * 9.8 * 1e-3 * dt # m/s
+        total_acceleration  = Spec.Fourier[0].real * 9.8 * 1e-3 / self.SamplingRate # m/s
         print('The sampling rate is ','{:10.4f}'.format(self.SamplingRate),'Hz')
         print('Mean value at FFT 0Hz:')
         print('{:10.4f}'.format(mean_acceleration),'mG')
