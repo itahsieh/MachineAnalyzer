@@ -5,35 +5,32 @@ case $CASE in
     "scalogram")
         ./viewer.py -i data/fan_20190422/DAC_raw_0422_abnor_high.bin \
         --show \
-        --spec \
-        --scalogram
+        plot=scalogram
         ;;
     "waterfall")
         ./viewer.py -i data/fan_20190409/raw3_1255.bin \
         --show \
-        --spec \
-        --waterfall
+        plot=waterfall
         ;;
     "contour")
         ./viewer.py -i data/fan_20190409/raw3_1255.bin \
         --show \
-        --spec \
-        --contour
+        plot=contour
         ;;
     "spec")
-        ./viewer.py -i data/shaking_table_20199223/0223_300_zraw3.bin \
+        ./viewer.py -i data/shaking_table_20190223/0223_300_zraw3.bin \
         --show \
-        --spec
+        plot=spec
         ;;
     "series")
-        ./viewer.py -i data/shaking_table_20199223/0223_300_zraw3.bin \
+        ./viewer.py -i data/shaking_table_20190223/0223_300_zraw3.bin \
         --show \
-        --series
+        plot=series
         ;;
     "fea")
         ./viewer.py -i data/fan_20190409/fea3_0409.bin \
         --show \
-        --series
+        plot=series
         ;;
     *)
         exit 1
