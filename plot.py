@@ -135,7 +135,7 @@ class Plot():
             cb.set_label('percentage')
             ax.set_title('Scalogram')
             ax.set_xlabel('Time (second)')
-            ax.set_ylabel(' scales a')
+            ax.set_ylabel('scales a')
         
                 
     def PlotRAWSeries(self):

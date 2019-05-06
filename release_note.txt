@@ -1,6 +1,6 @@
 dependencies:
     - for ubuntu 18.04
-    sudo apt install python3-tk
+    sudo apt install python3-pip python3-tk
     - for python 3
     pip3 install numpy scipy matplotlib
 
@@ -13,7 +13,7 @@ version, time of completion, note of progress
 
 on-going
 
-0.1.2                   walet transform
+0.1.2                   wavlet transform
 
 
 planning
