@@ -42,7 +42,7 @@ parser.add_argument('--axis', dest='axis', default=None,
                     help = "data of which axis, specify 'x', 'y', or 'z'")
 
 parser.add_argument('--range', dest='record_range', default=None, 
-                    help = "range of record number, e.g. range=1000,2000")
+                    help = "range of record number, e.g. --range=1000,2000")
 
 parser.add_argument('--fea', dest='fea_data', action='store_true',
                     default=False, help = "feature data tag")
@@ -58,6 +58,14 @@ parser.add_argument('--IV', dest='IV',
 
 parser.add_argument('--threshold', dest='threshold',
                     default="0.0", help = "acceleration threshold (mG), for 'velocity' use")
+
+parser.add_argument('--rmmean', dest='rmmean', action='store_true',
+                    default=False , help = "remove mean")
+
+parser.add_argument('--refrange', dest='ref_range', default=None, 
+                    help = "reference range of record number, e.g. --refrange=1000,2000")
+
+
 
 # fetch the arguments
 args = parser.parse_args(argv)

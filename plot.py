@@ -170,6 +170,29 @@ class Plot():
                     ImgFile=self.DataName+'_Z-axis_Series.png'
                     )
         else:
+            if self.VisualOpt.rmmean:
+                mean = np.mean(self.Array)
+                self.Array -= mean
+                
+            ref_range = self.VisualOpt.ref_range
+            if ref_range:
+                if len(ref_range) == 1:
+                    mean = np.mean(self.Array[ref_range[0]:ref_range[1]+1])
+                    self.Array -= mean
+                elif len(ref_range) == 2:
+                    mean1 = np.mean(self.Array[ref_range[0][0]:ref_range[0][1]+1])
+                    mean2 = np.mean(self.Array[ref_range[1][0]:ref_range[1][1]+1])
+                    for i in range(len(self.Array)):
+                        if i <= ref_range[0][1]:
+                            self.Array[i] -= mean1
+                        elif i > ref_range[0][1] and i < ref_range[1][0]:
+                            a = (i - ref_range[0][1])/(ref_range[1][0]-ref_range[0][1]) 
+                            b = 1.0 - a
+                            self.Array[i] -= a*mean2 + b*mean1
+                        else:
+                            self.Array[i] -= mean2
+             
+             
             VisualType = "Raw Data"
             self.PlotTimeSeries( VisualType, 
                 data = self.Array, 
@@ -271,7 +294,40 @@ class Plot():
                 v[i+1] = v[i] + self.acc_total[i] # m/s
             else:
                 v[i+1] =v[i]
+        
+        ref_range = self.VisualOpt.ref_range
+        if ref_range:
+            if len(ref_range) == 1:
+                time_interval = [ ref_range[0]/self.SamplingRate, ref_range[1]/self.SamplingRate ]
+                idx = [int(round(time_interval[0]/self.CycleTime)),
+                    int(round(time_interval[1]/self.CycleTime))+1]
+                v_mean = np.mean(v[idx[0]:idx[1]    ])
+                v -= v_mean
+            elif len(ref_range) == 2:
+                time_interval1 = [ref_range[0][0]/self.SamplingRate, 
+                                  ref_range[0][1]/self.SamplingRate ]
+                idx1 = [int(round(time_interval1[0]/self.CycleTime)),
+                        int(round(time_interval1[1]/self.CycleTime))+1]
+                time_interval2 = [ref_range[1][0]/self.SamplingRate, 
+                                  ref_range[1][1]/self.SamplingRate ]
+                idx2 = [int(round(time_interval2[0]/self.CycleTime)),
+                        int(round(time_interval2[1]/self.CycleTime))+1]
+                v_mean1 = np.mean(v[idx1[0]:idx1[1]])
+                v_mean2 = np.mean(v[idx2[0]:idx2[1]])
+                for i in range(len(v)):
+                    if i <= idx1[1]:
+                        v[i] -= v_mean1
+                    elif i >idx1[1] and i < idx2[0]:
+                        a = (i - idx1[1])/(idx2[0] - idx1[1])
+                        b = 1.0 - a
+                        v[i] -= a*v_mean2 + b*v_mean2
+                    else:
+                        v[i] -= v_mean2
                 
+                
+                
+                
+            
         print('Maximum velocity: ',np.max(v),'m/s')
         print('Minimum velocity: ',np.min(v),'m/s')
         

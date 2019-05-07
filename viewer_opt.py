@@ -22,16 +22,33 @@ class Opt(object):
         self.IV = float(args.IV)
         self.threshold = float(args.threshold)
         
+        self.rmmean = args.rmmean
+        
         if args.axis == None:
             self.axis = None
         else:
             self.axis = args.axis.rsplit('=',1)[0]
+        
+
+        
         
         if args.record_range == None:
             self.record_range = None
         else:
             self.record_range = args.record_range.rsplit('=',1)[0].rsplit(',',1)
             self.record_range = list(map(int, self.record_range))
+        
+        
+        if args.ref_range == None:
+            self.ref_range = None
+        else:
+            self.ref_range = args.ref_range.rsplit('=',1)[0]
+            from ast import literal_eval
+            self.ref_range = literal_eval(self.ref_range)
+
+
+
+        
         
         self.PlotType = args.plot.rsplit('=',1)[1].rsplit(',')
         
