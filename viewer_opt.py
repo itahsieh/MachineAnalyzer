@@ -1,4 +1,10 @@
-PlotKey = ['series','spec','waterfall','contour','scalogram','velocity']
+PlotKey = ['series',
+           'hist',
+           'spec',
+           'waterfall',
+           'contour',
+           'scalogram',
+           'velocity']
 
 
 class Opt(object):
@@ -8,8 +14,9 @@ class Opt(object):
         self.show_gui   = args.show_gui
         # data type tag
         self.raw_data   = args.raw_data
-        self._3ax_raw_data   = args._3ax_raw_data
+        self._3ax_raw_data = args._3ax_raw_data
         self.fea_data   = args.fea_data
+        self.rmmean     = args.rmmean
         # input path
         self.DataPath = args.data
         splitted_path = self.DataPath.rsplit('/',1) 
@@ -18,11 +25,20 @@ class Opt(object):
         # sampling rate
         self.sampling = float(args.sampling)
         
-        self.bias = float(args.bias)
-        self.IV = float(args.IV)
-        self.threshold = float(args.threshold)
+        self.bias       = float(args.bias)
+        self.IV         = float(args.IV)
+        self.threshold  = float(args.threshold)
         
-        self.rmmean = args.rmmean
+        
+        
+        if args.ylim:
+            self.ylim = list(map(float,args.ylim.split(',')))
+        else:
+            self.ylim = None
+        
+        
+        
+        
         
         if args.axis == None:
             self.axis = None

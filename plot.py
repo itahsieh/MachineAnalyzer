@@ -55,6 +55,9 @@ class Plot():
         PlotType = self.VisualOpt.PlotType
         if 'series' in PlotType:
             self.PlotRAWSeries()
+            
+        if 'hist' in PlotType:
+            self.PlotRAWHist()
         
         if 'spec' in PlotType:
             self.PloRAWSpectrum()
@@ -193,18 +196,22 @@ class Plot():
                             self.Array[i] -= mean2
              
              
-            VisualType = "Raw Data"
-            self.PlotTimeSeries( VisualType, 
+            self.PlotTimeSeries( 
+                "Raw Data", 
                 data = self.Array, 
                 ImgFile=self.DataName+'_Series.png'
                 )
-            self.PlotHist( 
-                VisualType, 
-                data = self.Array, 
-                ImgFile=self.DataName+'_Hist.png'
-                )
-        
-                
+            
+     
+    def PlotRAWHist(self):
+        self.PlotHist( 
+            "Raw Data", 
+            data = self.Array, 
+            ImgFile=self.DataName+'_Hist.png'
+            )
+                    
+                    
+                    
     def PlotRAWSpecWaterfall(self):
         fig = plt.figure(figsize=Spec_figsize, dpi=Spec_dpi)
         ax = fig.add_subplot(111, projection='3d')
@@ -356,7 +363,7 @@ class Plot():
         if self.VisualOpt.record_range == None:
             DataSize = 2**floor(np.log(len(self.Array))/np.log(2.))
             dataFFT = self.Array
-            print('Thea data size:',DataSize)
+            print('The data size:',DataSize)
             filename = self.DataName+'_Spec.png'
         else:
             dataFFT = self.Array[
@@ -393,10 +400,14 @@ class Plot():
             title='Time series of ' + DataType)
 
         axes.grid(True)
+        
         if self.VisualOpt.record_range != None:
             axes.set_xlim( left  = self.VisualOpt.record_range[0],
                            right = self.VisualOpt.record_range[1])
         
+        if self.VisualOpt.ylim:
+            axes.set_ylim( top    = self.VisualOpt.ylim[0],
+                           bottom = self.VisualOpt.ylim[1])
         
         if self.VisualOpt.SaveFig:
             self.PlotOutput()
