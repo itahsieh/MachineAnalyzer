@@ -83,7 +83,7 @@ while True:
             YArray = np.concatenate( (YArray, RAW_DATA[1,:]), axis=0)
             ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)
             
-            if len(XArray) > np.abs(left_limit*100):
+            if len(XArray) > np.abs(left_limit):
                 XArray = XArray[left_limit:-1]
                 YArray = YArray[left_limit:-1]
                 ZArray = ZArray[left_limit:-1]
