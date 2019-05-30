@@ -41,7 +41,7 @@ fig, axes = plt.subplots( nrows = 3,
                           figsize = Spec_figsize, 
                           dpi = Spec_dpi
                           )
-left_limit = -3000.0
+left_limit = -1500
 
 
 
@@ -81,17 +81,22 @@ while True:
             
             XArray = np.concatenate( (XArray, RAW_DATA[0,:]), axis=0)
             YArray = np.concatenate( (YArray, RAW_DATA[1,:]), axis=0)
-            ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)          
+            ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)
             
+            if len(XArray) > np.abs(left_limit*100):
+                XArray = XArray[left_limit:-1]
+                YArray = YArray[left_limit:-1]
+                ZArray = ZArray[left_limit:-1]
+
+
             index = range(-len(XArray),0)
+            
             lineX.set_xdata(index)
             lineX.set_ydata(XArray)
             
-            #index = range(-len(YArray),0)
             lineY.set_xdata(index)
             lineY.set_ydata(YArray)
             
-            #index = range(-len(ZArray),0)
             lineZ.set_xdata(index)
             lineZ.set_ydata(ZArray)
             
