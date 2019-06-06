@@ -58,17 +58,20 @@ axes[2].set( xlabel = 'Record Number', ylabel = 'Acceleration (mG)', title='Time
 axes[2].set_xlim( left  = left_limit, right = 0.0)
 lineZ, = axes[2].plot([],[])
 
-Last_timestamp = FetchLastTimestamp(cur)
+LastTimestamp = FetchLastTimestamp(cur)
 
 while True:
     
-    Last_timestamp_new = FetchLastTimestamp(cur)
+    LastTimestamp_new = FetchLastTimestamp(cur)
     
-    if Last_timestamp_new > Last_timestamp:
+    if (LastTimestamp_new - LastTimestamp).seconds > 1.0:
+        print('Has to update more than one timestamp')
+    
+    if LastTimestamp_new > LastTimestamp:
 
-        data = FetchData( cur, Last_timestamp_new, Last_timestamp)
-        
-        for row in range(-len(data),0):
+        data = FetchData( cur, LastTimestamp_new, LastTimestamp)
+            
+        for row in range(-1,-len(data)-1,-1):
         
             time    = data[row][0]
             length  = data[row][1]
@@ -112,19 +115,13 @@ while True:
                 #We need to draw *and* flush
                 fig.canvas.draw()
                 fig.canvas.flush_events()
-
-
-
-                
                 
             elif len(payload) == length:
                 print('Drop out the data at row',iROW+1,', length =',length)
             else:
                 print('data loss at ',time)
-            
-
         
-        Last_timestamp = Last_timestamp_new
+        LastTimestamp = LastTimestamp_new
     PyTime.sleep(0.5)
 
 
