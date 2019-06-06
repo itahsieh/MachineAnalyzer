@@ -64,8 +64,8 @@ while True:
     
     LastTimestamp_new = FetchLastTimestamp(cur)
     
-    if (LastTimestamp_new - LastTimestamp).seconds > 1.0:
-        print('Has to update more than one timestamp')
+    #if (LastTimestamp_new - LastTimestamp).seconds > 1.0:
+        #print('Has to update more than one timestamp')
     
     if LastTimestamp_new > LastTimestamp:
 
