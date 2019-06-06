@@ -5,7 +5,7 @@ import pg_conf
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
-from pg_fetch import FetchNumberOfRow, FetchData
+from pg_fetch import FetchNumberOfRow, FetchData, FetchLastTimestamp
 import time as PyTime
 
 Spec_figsize = (16, 12)
@@ -24,7 +24,7 @@ print("Opened database successfully")
 cur = conn.cursor()
 
 #select data
-NumberOfRow = FetchNumberOfRow(cur)
+
 
 TimeStamp =[]
 XArray = []
@@ -58,72 +58,73 @@ axes[2].set( xlabel = 'Record Number', ylabel = 'Acceleration (mG)', title='Time
 axes[2].set_xlim( left  = left_limit, right = 0.0)
 lineZ, = axes[2].plot([],[])
 
+Last_timestamp = FetchLastTimestamp(cur)
+
 while True:
     
+    Last_timestamp_new = FetchLastTimestamp(cur)
     
-    
-    NumberOfRow_new = FetchNumberOfRow(cur)
-    if NumberOfRow_new > NumberOfRow:
-        NumberOfRowToFetch = NumberOfRow_new - NumberOfRow
-        data = FetchData( cur, NumberOfRowToFetch)
+    if Last_timestamp_new > Last_timestamp:
+
+        data = FetchData( cur, Last_timestamp_new, Last_timestamp)
         
-        time    = data[-1][0]
-        length  = data[-1][1]
-        payload = data[-1][2]
+        for row in range(-len(data),0):
         
-        
-        
-        if len(payload) == length == 1200:
-            TimeStamp.append(time)
-            RAW_DATA = np.array( list( struct.unpack( 'f'*300, payload ) ) )
-            Nvalue = len(RAW_DATA)
-            RAW_DATA = RAW_DATA.reshape((int(Nvalue/3),3)).T
+            time    = data[row][0]
+            length  = data[row][1]
+            payload = data[row][2]
             
-            XArray = np.concatenate( (XArray, RAW_DATA[0,:]), axis=0)
-            YArray = np.concatenate( (YArray, RAW_DATA[1,:]), axis=0)
-            ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)
-            
-            if len(XArray) > np.abs(left_limit):
-                XArray = XArray[left_limit:-1]
-                YArray = YArray[left_limit:-1]
-                ZArray = ZArray[left_limit:-1]
+            if len(payload) == length == 1200:
+                TimeStamp.append(time)
+                RAW_DATA = np.array( list( struct.unpack( 'f'*300, payload ) ) )
+                Nvalue = len(RAW_DATA)
+                RAW_DATA = RAW_DATA.reshape((int(Nvalue/3),3)).T
+                
+                XArray = np.concatenate( (XArray, RAW_DATA[0,:]), axis=0)
+                YArray = np.concatenate( (YArray, RAW_DATA[1,:]), axis=0)
+                ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)
+                
+                if len(XArray) > np.abs(left_limit):
+                    XArray = XArray[left_limit:-1]
+                    YArray = YArray[left_limit:-1]
+                    ZArray = ZArray[left_limit:-1]
 
 
-            index = range(-len(XArray),0)
-            
-            lineX.set_xdata(index)
-            lineX.set_ydata(XArray)
-            
-            lineY.set_xdata(index)
-            lineY.set_ydata(YArray)
-            
-            lineZ.set_xdata(index)
-            lineZ.set_ydata(ZArray)
-            
-            #Need both of these in order to rescale
-            axes[0].relim()
-            axes[0].autoscale_view()
-            axes[1].relim()
-            axes[1].autoscale_view()
-            axes[2].relim()
-            axes[2].autoscale_view()
-            
-            #We need to draw *and* flush
-            fig.canvas.draw()
-            fig.canvas.flush_events()
+                index = range(-len(XArray),0)
+                
+                lineX.set_xdata(index)
+                lineX.set_ydata(XArray)
+                
+                lineY.set_xdata(index)
+                lineY.set_ydata(YArray)
+                
+                lineZ.set_xdata(index)
+                lineZ.set_ydata(ZArray)
+                
+                #Need both of these in order to rescale
+                axes[0].relim()
+                axes[0].autoscale_view()
+                axes[1].relim()
+                axes[1].autoscale_view()
+                axes[2].relim()
+                axes[2].autoscale_view()
+                
+                #We need to draw *and* flush
+                fig.canvas.draw()
+                fig.canvas.flush_events()
 
 
 
+                
+                
+            elif len(payload) == length:
+                print('Drop out the data at row',iROW+1,', length =',length)
+            else:
+                print('data loss at ',time)
             
-            
-        elif len(payload) == length:
-            print('Drop out the data at row',iROW+1,', length =',length)
-        else:
-            print('data loss at ',time)
-        
 
         
-        NumberOfRow = NumberOfRow_new
+        Last_timestamp = Last_timestamp_new
     PyTime.sleep(0.5)
 
 
