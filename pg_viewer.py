@@ -27,17 +27,24 @@ cur = conn.cursor()
 
 
 TimeStamp =[]
+
+index = []
+
 XArray = []
 YArray = []
 ZArray = []
-index = []
+
+Theta = []
+Phi = []
+
+Mag = np.zeros(100)
 
 
 
 plt.ion()
 
 fig, axes = plt.subplots( nrows = 3, 
-                          ncols = 1,
+                          ncols = 2,
                           figsize = Spec_figsize, 
                           dpi = Spec_dpi
                           )
@@ -46,17 +53,26 @@ left_limit = -1500
 
 
 
-axes[0].set( ylabel = 'Acceleration (mG)', title='Time series of X-axis' )
-axes[0].set_xlim( left  = left_limit, right = 0.0)
-lineX, = axes[0].plot([],[])
+axes[0,0].set( ylabel = 'Acceleration (mG)', title='Time series of X-axis' )
+axes[0,0].set_xlim( left  = left_limit, right = 0.0)
+lineX, = axes[0,0].plot([],[])
 
-axes[1].set( ylabel = 'Acceleration (mG)', title='Time series of Y-axis' )
-axes[1].set_xlim( left  = left_limit, right = 0.0)
-lineY, = axes[1].plot([],[])
+axes[1,0].set( ylabel = 'Acceleration (mG)', title='Time series of Y-axis' )
+axes[1,0].set_xlim( left  = left_limit, right = 0.0)
+lineY, = axes[1,0].plot([],[])
 
-axes[2].set( xlabel = 'Record Number', ylabel = 'Acceleration (mG)', title='Time series of Z-axis' )
-axes[2].set_xlim( left  = left_limit, right = 0.0)
-lineZ, = axes[2].plot([],[])
+axes[2,0].set( xlabel = 'Record Number', ylabel = 'Acceleration (mG)', title='Time series of Z-axis' )
+axes[2,0].set_xlim( left  = left_limit, right = 0.0)
+lineZ, = axes[2,0].plot([],[])
+
+ax_polar = plt.subplot(322, polar=True)
+ax_polar.set_rmax(180.0)
+ax_polar.set_rmin(0.0)
+ax_polar.grid(True)
+ax_polar.set_title("Orientation", va='bottom')
+linePolar, = ax_polar.plot([], [], color='r', linewidth=3)
+
+
 
 LastTimestamp = FetchLastTimestamp(cur)
 
@@ -80,12 +96,34 @@ while True:
             if len(payload) == length == 1200:
                 TimeStamp.append(time)
                 RAW_DATA = np.array( list( struct.unpack( 'f'*300, payload ) ) )
-                Nvalue = len(RAW_DATA)
-                RAW_DATA = RAW_DATA.reshape((int(Nvalue/3),3)).T
                 
+                Nvalue = len(RAW_DATA)
+                Ndata = int(Nvalue/3)
+                RAW_DATA = RAW_DATA.reshape( (Ndata, 3))
+                
+                
+                for i in range(Ndata):
+                    Mag[i] = np.linalg.norm(RAW_DATA[i,:])
+
+                RAW_DATA = RAW_DATA.T
                 XArray = np.concatenate( (XArray, RAW_DATA[0,:]), axis=0)
                 YArray = np.concatenate( (YArray, RAW_DATA[1,:]), axis=0)
                 ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)
+                
+                #print(Mag)
+                #print(np.divide(RAW_DATA[2,:],Mag))
+                #exit(0)
+                ThetaData = np.arccos(np.divide(RAW_DATA[2,:],Mag))
+                PhiData = np.arctan2(RAW_DATA[0,:],RAW_DATA[1,:])
+                
+                #Theta = np.concatenate( (Theta, ThetaData), axis=0)
+                #Phi = np.concatenate( (Phi, PhiData), axis=0)
+                
+     
+                linePolar.set_xdata(ThetaData)
+                linePolar.set_ydata(PhiData)
+                
+                
                 
                 if len(XArray) > np.abs(left_limit):
                     XArray = XArray[left_limit:-1]
@@ -105,12 +143,12 @@ while True:
                 lineZ.set_ydata(ZArray)
                 
                 #Need both of these in order to rescale
-                axes[0].relim()
-                axes[0].autoscale_view()
-                axes[1].relim()
-                axes[1].autoscale_view()
-                axes[2].relim()
-                axes[2].autoscale_view()
+                axes[0,0].relim()
+                axes[0,0].autoscale_view()
+                axes[1,0].relim()
+                axes[1,0].autoscale_view()
+                axes[2,0].relim()
+                axes[2,0].autoscale_view()
                 
                 #We need to draw *and* flush
                 fig.canvas.draw()
