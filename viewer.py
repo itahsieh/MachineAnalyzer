@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import argparse
+# prerequisite:
+# sudo apt install python3-pip
+# pip3 install numpy matplotlib
+
 import sys
 
 # usage

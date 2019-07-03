@@ -19,9 +19,15 @@ class Opt(object):
         self.rmmean     = args.rmmean
         # input path
         self.DataPath = args.data
-        splitted_path = self.DataPath.rsplit('/',1) 
-        self.DataDir  = splitted_path[0]+'/'
-        self.filename = splitted_path[1]
+        if '/' in self.DataPath:
+            splitted_path = self.DataPath.rsplit('/',1) 
+            self.DataDir  = splitted_path[0]+'/'
+            self.filename = splitted_path[1]
+        else:
+            self.DataDir  = './' 
+            self.filename = self.DataPath
+            
+            
         # sampling rate
         self.sampling = float(args.sampling)
         
