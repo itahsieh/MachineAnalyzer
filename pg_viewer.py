@@ -5,7 +5,7 @@ import pg_conf
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
-from pg_fetch import FetchNumberOfRow, FetchData, FetchLastTimestamp
+from pg_fetch import FetchNumberOfRow, FetchData, FetchLastTimeStamp
 import time as PyTime
 
 Spec_figsize = (16, 12)
@@ -37,8 +37,8 @@ ZArray = []
 Theta = []
 Phi = []
 
-Mag = np.zeros(100)
-
+XYMag = np.zeros(100)
+tan_theta = np.zeros(100)
 
 
 plt.ion()
@@ -65,8 +65,19 @@ axes[2,0].set( xlabel = 'Record Number', ylabel = 'Acceleration (mG)', title='Ti
 axes[2,0].set_xlim( left  = left_limit, right = 0.0)
 lineZ, = axes[2,0].plot([],[])
 
+axes[1,1].set( ylabel = 'Theta (rad)', title='Time series of Theta' )
+axes[1,1].set_xlim( left  = left_limit, right = 0.0)
+axes[1,1].set_ylim( top  = np.pi, bottom = 0.0)
+lineTheta, = axes[1,1].plot([],[])
+
+axes[2,1].set( xlabel = 'Record Number', ylabel = 'Phi (rad)', title='Time series of Phi' )
+axes[2,1].set_xlim( left  = left_limit, right = 0.0)
+axes[2,1].set_ylim( top  = 2. * np.pi, bottom = 0.0)
+linePhi, = axes[2,1].plot([],[])
+
+
 ax_polar = plt.subplot(322, polar=True)
-ax_polar.set_rmax(180.0)
+ax_polar.set_rmax(0.5 * np.pi)
 ax_polar.set_rmin(0.0)
 ax_polar.grid(True)
 ax_polar.set_title("Orientation", va='bottom')
@@ -74,18 +85,15 @@ linePolar, = ax_polar.plot([], [], color='r', linewidth=3)
 
 
 
-LastTimestamp = FetchLastTimestamp(cur)
+LastTimeStamp = FetchLastTimeStamp(cur)
 
 while True:
     
-    LastTimestamp_new = FetchLastTimestamp(cur)
-    
-    #if (LastTimestamp_new - LastTimestamp).seconds > 1.0:
-        #print('Has to update more than one timestamp')
-    
-    if LastTimestamp_new > LastTimestamp:
+    NewTimeStamp = FetchLastTimeStamp(cur)
 
-        data = FetchData( cur, LastTimestamp_new, LastTimestamp)
+    if NewTimeStamp > LastTimeStamp:
+
+        data = FetchData( cur, NewTimeStamp, LastTimeStamp)
             
         for row in range(-1,-len(data)-1,-1):
         
@@ -103,25 +111,24 @@ while True:
                 
                 
                 for i in range(Ndata):
-                    Mag[i] = np.linalg.norm(RAW_DATA[i,:])
+                    XYMag[i] = np.linalg.norm(RAW_DATA[i,0:2])
+
 
                 RAW_DATA = RAW_DATA.T
                 XArray = np.concatenate( (XArray, RAW_DATA[0,:]), axis=0)
                 YArray = np.concatenate( (YArray, RAW_DATA[1,:]), axis=0)
                 ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)
                 
-                #print(Mag)
-                #print(np.divide(RAW_DATA[2,:],Mag))
-                #exit(0)
-                ThetaData = np.arccos(np.divide(RAW_DATA[2,:],Mag))
-                PhiData = np.arctan2(RAW_DATA[0,:],RAW_DATA[1,:])
+
+                ThetaData = np.arctan2(XYMag, RAW_DATA[2,:])
+                PhiData = np.arctan2(RAW_DATA[1,:],RAW_DATA[0,:]) + np.pi
                 
-                #Theta = np.concatenate( (Theta, ThetaData), axis=0)
-                #Phi = np.concatenate( (Phi, PhiData), axis=0)
+                Theta = np.concatenate( (Theta, ThetaData), axis=0)
+                Phi = np.concatenate( (Phi, PhiData), axis=0)
                 
      
-                linePolar.set_xdata(ThetaData)
-                linePolar.set_ydata(PhiData)
+                linePolar.set_ydata(ThetaData)
+                linePolar.set_xdata(PhiData)
                 
                 
                 
@@ -129,6 +136,9 @@ while True:
                     XArray = XArray[left_limit:-1]
                     YArray = YArray[left_limit:-1]
                     ZArray = ZArray[left_limit:-1]
+                    
+                    Theta = Theta[left_limit:-1]
+                    Phi = Phi[left_limit:-1]
 
 
                 index = range(-len(XArray),0)
@@ -142,6 +152,12 @@ while True:
                 lineZ.set_xdata(index)
                 lineZ.set_ydata(ZArray)
                 
+                lineTheta.set_xdata(index)
+                lineTheta.set_ydata(Theta)
+                
+                linePhi.set_xdata(index)
+                linePhi.set_ydata(Phi)
+                
                 #Need both of these in order to rescale
                 axes[0,0].relim()
                 axes[0,0].autoscale_view()
@@ -149,6 +165,7 @@ while True:
                 axes[1,0].autoscale_view()
                 axes[2,0].relim()
                 axes[2,0].autoscale_view()
+
                 
                 #We need to draw *and* flush
                 fig.canvas.draw()
@@ -159,7 +176,7 @@ while True:
             else:
                 print('data loss at ',time)
         
-        LastTimestamp = LastTimestamp_new
+        LastTimeStamp = NewTimeStamp
     PyTime.sleep(0.5)
 
 

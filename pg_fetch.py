@@ -15,7 +15,7 @@ def FetchData(cursor, LaterTimestamp, EarlyTimestamp):
         )
     return np.array(cursor.fetchall())
 
-def FetchLastTimestamp(cursor):
+def FetchLastTimeStamp(cursor):
     cursor.execute(
         "SELECT captured FROM raw "
         "ORDER BY captured DESC " +
