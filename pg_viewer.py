@@ -35,6 +35,7 @@ YArray = []
 ZArray = []
 
 Theta = []
+ReversedTheta = []
 Phi = []
 
 XYMag = np.zeros(100)
@@ -68,12 +69,12 @@ lineZ, = axes[2,0].plot([],[])
 axes[1,1].set( ylabel = 'Theta (rad)', title='Time series of Theta' )
 axes[1,1].set_xlim( left  = left_limit, right = 0.0)
 axes[1,1].set_ylim( top  = np.pi, bottom = 0.0)
-lineTheta, = axes[1,1].plot([],[])
+lineTheta, = axes[1,1].plot([],[], color='c')
 
 axes[2,1].set( xlabel = 'Record Number', ylabel = 'Phi (rad)', title='Time series of Phi' )
 axes[2,1].set_xlim( left  = left_limit, right = 0.0)
 axes[2,1].set_ylim( top  = 2. * np.pi, bottom = 0.0)
-linePhi, = axes[2,1].plot([],[])
+linePhi, = axes[2,1].plot([],[], color='m')
 
 
 ax_polar = plt.subplot(322, polar=True)
@@ -81,7 +82,8 @@ ax_polar.set_rmax(0.5 * np.pi)
 ax_polar.set_rmin(0.0)
 ax_polar.grid(True)
 ax_polar.set_title("Orientation", va='bottom')
-linePolar, = ax_polar.plot([], [], color='r', linewidth=3)
+linePolar, = ax_polar.plot([], [], color='r', linewidth=3, marker=".")
+linePolar_ReversedTheta, = ax_polar.plot([], [], color='g', linewidth=3, marker=".")
 
 
 
@@ -119,18 +121,21 @@ while True:
                 YArray = np.concatenate( (YArray, RAW_DATA[1,:]), axis=0)
                 ZArray = np.concatenate( (ZArray, RAW_DATA[2,:]), axis=0)
                 
-
                 ThetaData = np.arctan2(XYMag, RAW_DATA[2,:])
-                PhiData = np.arctan2(RAW_DATA[1,:],RAW_DATA[0,:]) + np.pi
-                
                 Theta = np.concatenate( (Theta, ThetaData), axis=0)
+                
+                ReversedThetaData = np.pi - ThetaData
+                for i in range(len(ThetaData)):
+                    if ThetaData[i] > 0.5*np.pi:
+                        ThetaData[i] = np.nan
+                    if ReversedThetaData[i] > 0.5*np.pi:
+                        ReversedThetaData[i] = np.nan
+                
+                PhiData = np.arctan2(RAW_DATA[1,:],RAW_DATA[0,:]) + np.pi
                 Phi = np.concatenate( (Phi, PhiData), axis=0)
                 
-     
-                linePolar.set_ydata(ThetaData)
-                linePolar.set_xdata(PhiData)
                 
-                
+                    
                 
                 if len(XArray) > np.abs(left_limit):
                     XArray = XArray[left_limit:-1]
@@ -152,6 +157,9 @@ while True:
                 lineZ.set_xdata(index)
                 lineZ.set_ydata(ZArray)
                 
+                linePolar.set_data(PhiData, ThetaData)
+                linePolar_ReversedTheta.set_data(PhiData, ReversedThetaData)
+                
                 lineTheta.set_xdata(index)
                 lineTheta.set_ydata(Theta)
                 
@@ -172,9 +180,9 @@ while True:
                 fig.canvas.flush_events()
                 
             elif len(payload) == length:
-                print('Drop out the data at row',iROW+1,', length =',length)
+                print('Drop out the data at row', iROW+1,', length =',length)
             else:
-                print('data loss at ',time)
+                print('data loss at ', time)
         
         LastTimeStamp = NewTimeStamp
     PyTime.sleep(0.5)

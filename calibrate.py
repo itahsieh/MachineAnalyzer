@@ -1,67 +1,41 @@
 #!/usr/bin/env python3
 # prerequisite: pip3 install pyserial
 
-import serial
-from ast import literal_eval
-import threading
+debug = 1
+if debug:
+    import matplotlib.pyplot as plt
+    Spec_figsize = (16, 12)
+    Spec_dpi = 80
+
 import struct
 import time
-import sys
-#import matplotlib.pyplot as plt
+from sys import path
+path.append('./lib')
 
-#Spec_figsize = (16, 12)
-#Spec_dpi = 80
+from MA_utilities import bcolors
+from MA_serial import SendCommand, SerialConnect
 
-buffer_size = 1400
-AverageInterval = 1.
-
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-def SendCommand( ser_port, string):
-    AT_string = 'AT$' + string + '\r'
-    ser_port.write(AT_string.encode() )
-    time.sleep(0.1)
-    ser_port.flush()
+def RawAverage(ser_port, instruction_str):  
+    buffer_size = 1400
+    # time interval to take calculating average, in seconds 
+    AverageInterval = 1.
     
-def ListConfig(ser_port):
-    SendCommand( ser, 'LIST')
-    while ser.inWaiting() > 0:
-        response = ser.readlines()
-        print(
-            bcolors.WARNING +
-            'LIST the configuration of the sensor' +
-            bcolors.ENDC
-            )
-        for i in range(len(response)):
-            line = response[i].strip().decode('charmap')
-            print(repr(line).strip('"\''))
+    input( bcolors.HEADER +
+        instruction_str + ', it will take ' + str(AverageInterval) + ' secs to calculate average\n' +
+        bcolors.ENDC +
+        "Press Enter to continue...")
 
-def RawAverage(ser_port):   
-    
-
-    #binary_file = open("test.dat", 'wb')
-    count = 0
-    Xmean = 0.
-    Ymean = 0.
-    Zmean = 0.
+    count = 0; Xmean = 0.; Ymean = 0.; Zmean = 0.
     
     Zarray = []
     
-    
-    ser_port.flushInput()
-    ser_port.flushOutput()
-    ser_port.read(1200)
+    # flush out serial data (wait untill all data is written)
+    ser_port.flush()
+    # restart serial streaming
+    SendCommand( ser_port, 'RS')
+    # get rid of the leading n records, in case of the firmware buffer (supposed to be 1 record) 
+    # ( n * 14 bytes for raw data mode) 
+    ser_port.read(10 * 14)
 
     T_start = time.time()
     while True:
@@ -69,88 +43,62 @@ def RawAverage(ser_port):
         raw_list = buffer.split(b'\xa5')
         
         for i in range(1,len(raw_list)-1):
-            #print(len(raw_list[i]))
             if len(raw_list[i]) == 13:
-                
-                #binary_file.write(raw_list[i][0:12])
-                
                 raw_float = struct.unpack( 'f'*3, raw_list[i][0:12] ) 
                 
-                # print float as screen output
-                #print(raw_float)
-                
+                count += 1
                 Xmean += raw_float[0]
                 Ymean += raw_float[1]
                 Zmean += raw_float[2]
-                
-                count += 1
                 
                 Zarray.append(raw_float[2])
         
         if (time.time() - T_start) > AverageInterval:
             break
-
+    
+    SendCommand( ser_port, 'S')
+    
     Xmean /= float(count)
     Ymean /= float(count)
     Zmean /= float(count)
 
-    print('Means of X, Y, Z:', Xmean, Ymean, Zmean)
+    print('Means of X, Y, Z:', Xmean, Ymean, Zmean,'\n')
     
-    #fig, axes = plt.subplots(figsize=Spec_figsize, dpi=Spec_dpi)
-    #axes.plot(Zarray)
-    #axes.set(xlabel='Record number', ylabel = 'acceleration',
-            #title='Time series of Z-acceleration')
-    #axes.grid(True)
-
-    #binary_file.close()
+    if debug:
+        fig, axes = plt.subplots( figsize = Spec_figsize, dpi = Spec_dpi)
+        axes.plot(Zarray)
+        axes.set(xlabel='Record number', 
+                 ylabel = 'acceleration',
+                 title='Time series of Z-acceleration')
+        axes.grid(True)
+        
     return Xmean, Ymean, Zmean
 
 
-
-try:
-    ser = serial.Serial(
-        port = "/dev/ttyUSB0", 
-        baudrate = 19200, 
-        bytesize = serial.EIGHTBITS,
-        parity = serial.PARITY_NONE,
-        stopbits = serial.STOPBITS_ONE,
-        timeout = 1
-        )
-except:
-    sys.exit("Error connecting device")
-
-
-#ListConfig(ser)
-
+ser = SerialConnect("/dev/ttyUSB0", 19200)
+SendCommand( ser, 'S')
 SendCommand( ser, 'RAW')
-SendCommand( ser, 'RS')
 
-input( bcolors.HEADER +
-    'Place first position:\n' + 
-    str(AverageInterval) + ' secs to clculate average\n' + 
-    bcolors.ENDC +
-    "Press Enter to continue...")
-X1, Y1, Z1 = RawAverage(ser)
-
-input( bcolors.HEADER +
-    'Reverse along X-axis:\n' + 
-    str(AverageInterval) + ' secs to clculate average\n' +
-    bcolors.ENDC +
-    "Press Enter to continue...")
-X2, Y2, Z2 = RawAverage(ser)
-
-input( bcolors.HEADER +
-    'Reverse along Y-axis:\n' + 
-    str(AverageInterval) + ' secs to clculate average\n' +
-    bcolors.ENDC +
-    "Press Enter to continue...")
-X3, Y3, Z3 = RawAverage(ser)
-
-print('X-bias:', 0.5*(0.5*(X1+X2) + X3))
-print('Y-bias:', 0.5*(0.5*(Y2+Y3) + Y1))
-print('Z-bias:', 0.5*(0.5*(Z1+Z3) + Z2))
+X1, Y1, Z1 = RawAverage( ser, 'Place in the first position')
+X2, Y2, Z2 = RawAverage( ser, 'Rotate 180 degrees along X-axis')
+X3, Y3, Z3 = RawAverage( ser, 'Rotate 180 degrees along Y-axis')
 
 ser.close()
-#plt.show()
+
+Xbias = 0.5*(0.5*(X1+X2) + X3)
+Ybias = 0.5*(0.5*(Y2+Y3) + Y1)
+Zbias = 0.5*(0.5*(Z1+Z3) + Z2)
+
+print('bias:', Xbias, Ybias, Zbias)
+
+BiasFile = open( "bias.dat", "a")
+BiasFile.write( 
+    '{:f} {:f} {:f}\n'.format( Xbias, Ybias, Zbias)
+    )
+BiasFile.close()
+
+if debug:
+    plt.show()
+
 
 
