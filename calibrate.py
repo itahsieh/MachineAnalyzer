@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# sudo apt install python3-pip
 # prerequisite: pip3 install pyserial
 
 debug = 1
