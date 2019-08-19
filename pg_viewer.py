@@ -5,7 +5,7 @@ import pg_conf
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
-from pg_fetch import FetchNumberOfRow, FetchData, FetchLastTimeStamp
+from pg_fetch import FetchNumberOfRow, FetchData, FetchLastTimeStamp, FetchData2, FetchLastTimeStamp2
 import time as PyTime
 
 Spec_figsize = (16, 12)

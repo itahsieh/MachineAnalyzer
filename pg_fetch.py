@@ -22,3 +22,28 @@ def FetchLastTimeStamp(cursor):
         "LIMIT 1"
         )
     return cursor.fetchall()[0][0]
+
+def FetchLastTimeStamp2(cursor):
+    cursor.execute(
+        "SELECT captured FROM raw "
+        "ORDER BY received DESC " +
+        "LIMIT 1"
+        )
+    return cursor.fetchall()[0][0]
+
+def FetchLastRecord(cursor, n):
+    cursor.execute(
+        "SELECT captured FROM raw "
+        "ORDER BY received DESC " +
+        "LIMIT " + str(n)
+        )
+    return cursor.fetchall()
+
+
+def FetchData2(cursor, LaterTimestamp, EarlyTimestamp):
+    cursor.execute(
+        "SELECT received, data_len, data FROM raw " +
+        "WHERE received <= '"+str(LaterTimestamp)+"' and received > '"+str(EarlyTimestamp)+"' "
+        "ORDER BY received DESC " 
+        )
+    return np.array(cursor.fetchall())
