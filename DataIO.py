@@ -1,7 +1,7 @@
 import os
 import struct
 
-# single-precision data format --> DataType_Nbyte =4 bytes
+# single-precision data format --> DataType_Nbyte = 4 bytes
 DataType_Nbyte = 4
 
 # The order of the data format

@@ -8,12 +8,12 @@ case $CASE in
         plot=scalogram
         ;;
     "waterfall")
-        ./viewer.py -i data/fan_20190409/raw3_1255.bin \
+        ./viewer.py -i data/fan/fan_20190409/raw3_1255.bin \
         --show \
         plot=waterfall
         ;;
     "contour")
-        ./viewer.py -i data/fan_20190409/raw3_1255.bin \
+        ./viewer.py -i data/fan/fan_20190409/raw3_1255.bin \
         --show \
         plot=contour
         ;;
