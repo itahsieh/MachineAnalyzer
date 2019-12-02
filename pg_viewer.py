@@ -5,6 +5,8 @@ import pg_conf
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
+from sys import path
+path.append('./lib')
 from pg_fetch import FetchNumberOfRow, FetchData, FetchLastTimeStamp, FetchData2, FetchLastTimeStamp2
 import time as PyTime
 
@@ -38,8 +40,7 @@ Theta = []
 ReversedTheta = []
 Phi = []
 
-XYMag = np.zeros(100)
-tan_theta = np.zeros(100)
+
 
 
 plt.ion()
@@ -103,13 +104,16 @@ while True:
             length  = data[row][1]
             payload = data[row][2]
             
-            if len(payload) == length == 1200:
+            if len(payload) == length:
                 TimeStamp.append(time)
-                RAW_DATA = np.array( list( struct.unpack( 'f'*300, payload ) ) )
+                RAW_DATA = np.array( list( struct.unpack( 'f'*int(length/4), payload ) ) )
                 
                 Nvalue = len(RAW_DATA)
                 Ndata = int(Nvalue/3)
                 RAW_DATA = RAW_DATA.reshape( (Ndata, 3))
+                
+                XYMag = np.zeros(Ndata)
+                tan_theta = np.zeros(Ndata)
                 
                 
                 for i in range(Ndata):
@@ -179,8 +183,8 @@ while True:
                 fig.canvas.draw()
                 fig.canvas.flush_events()
                 
-            elif len(payload) == length:
-                print('Drop out the data at row', iROW+1,', length =',length)
+            #elif len(payload) == length:
+                #print('Drop out the data at row', iROW+1,', length =',length)
             else:
                 print('data loss at ', time)
         
