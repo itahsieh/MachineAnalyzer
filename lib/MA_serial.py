@@ -22,7 +22,7 @@ class sensor():
                 if 'FIRMWARE VERSION' in line:
                     self.version = line.split(":",1)[1].replace(" ", "")
                 elif 'BUILD DATE' in line:
-                    self.version = line.split(":",1)[1].split()
+                    self.build_date = line.split(":",1)[1].split()
                 # attributes of sensor
                 elif 'SENSOR ID' in line:
                     self.ID = line.split(":",1)[1].replace(" ", "")
@@ -47,7 +47,8 @@ def SerialConnect( Port, BaudRate):
             timeout = 1
             )
         return ser
-    except:
+    except Exception as e:
+        print(e)
         sys.exit("Error connecting device")
 
 
@@ -59,6 +60,6 @@ def SendCommand( ser_port, string):
 
     
 def ListConfig(ser_port):
-    sensor_config = sensor( ser_port, print_out = True) 
-    return sensor_config
+    return sensor( ser_port, print_out = True) 
+    
 
